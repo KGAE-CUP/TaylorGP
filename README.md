@@ -53,6 +53,7 @@ python TaylorGP.py --fileName="Feynman/F24.tsv"
 
 We evaluate the performance of TaylorGP on three kinds of benchmarks: classical Symbolic Regression Benchmarks (**SRB**), Penn
 Machine Learning Benchmarks (**PMLB**), and Feynman Symbolic Regression Benchmarks (**FSRB**) .(You could get them from directories GECCO, PMLB and Feynman respectively).The distribution of the total 81 benchmark sizes by samples and features is shown in the following. 
+
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="50%">
 
 The details of these benchmarks are listed in the [appendix](https://github.com/KGAE-CUP/TaylorGP/blob/main/img/Appendix_Taylor_Symbolic_Regression_GECCO2022.pdf).
