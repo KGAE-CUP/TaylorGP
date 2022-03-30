@@ -55,24 +55,37 @@ python TaylorGP.py --fileName="Feynman/F24.tsv"
 ## DataSet
 
 We evaluate the performance of TaylorGP on three kinds of benchmarks: classical Symbolic Regression Benchmarks (SRB), Penn
-Machine Learning Benchmarks (PMLB), and Feynman Symbolic Regression Benchmarks (FSRB) .(You could get them from directories GECCO, PMLB and Feynman respectively).The distribution of the total 81 benchmark sizes by samples and features is shown in Figure 2. 
-
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="60%">
+Machine Learning Benchmarks (PMLB), and Feynman Symbolic Regression Benchmarks (FSRB) .(You could get them from directories GECCO, PMLB and Feynman respectively).The distribution of the total 81 benchmark sizes by samples and features is shown in the following. 
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="50%">
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="40%">
-
-
-
 
 The details of these benchmarks are listed in the [appendix](https://github.com/KGAE-CUP/TaylorGP/blob/main/img/Appendix_Taylor_Symbolic_Regression_GECCO2022.pdf).
 
 ## Performance
 
-We compare TaylorGP with two kinds of baseline algorithms \footnote{The nine baseline algorithms are implemented in SRBench \cite{cava2021contemporary}}: four symbolic regression methods and five machine learning methods. The symbolic regression methods include [**GPlearn**](https://github.com/trevorstephens/gplearn), FFX , geometric semantic genetic programming (**GSGP**) and bayesian symbolic regression (**BSR**). The machine learning methods include linear regression (**LR**), kernel ridge regression (**KR**), random forest regression (**RF**), support vector machines (**SVM**), and **XGBoost** . 
+We compare TaylorGP with two kinds of baseline algorithms \footnote{The nine baseline algorithms are implemented in [SRBench](https://github.com/cavalab/srbench) : four symbolic regression methods and five machine learning methods. The symbolic regression methods include [**GPlearn**](https://github.com/trevorstephens/gplearn), FFX , geometric semantic genetic programming (**GSGP**) and bayesian symbolic regression (**BSR**). The machine learning methods include linear regression (**LR**), kernel ridge regression (**KR**), random forest regression (**RF**), support vector machines (**SVM**), and **XGBoost** . 
 
-igure \ref{fig:normalizedR} illustrates the normalized R^2 scores of the ten algorithms running 30 times on all benchmarks. Since the normalized $R^2$ closer to 1 indicates better results, overall TaylorGP can find more accurate results than other algorithms.
+As shown in the figure below , we illustrate the normalized R^2 scores of the ten algorithms running 30 times on all benchmarks. Since the normalized $R^2$ closer to 1 indicates better results, overall TaylorGP can find more accurate results than other algorithms.
+
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="80%">
+
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="60%">
+
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="40%">
 
 Figure \ref{fig:GECCO_Feynman_ML_Box} illustrates that TaylorGP, when compared with the nine baseline algorithms, can obtain more accurate and stable results on the two benchmarks, SRB and FSRB. However, on the benchmark PMLB, the two algorithms, FFX and XGBoost, outperform TaylorGP. 
+
+<center class="half">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+</center>
+<center>
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
+</center>
+
+
 
 # 4. Cite
 
