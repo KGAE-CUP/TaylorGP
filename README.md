@@ -35,35 +35,7 @@ Make sure you have installed the following python version and pacakges before st
 Our experiments were running in Ubuntu 18.04 with Intel(R) Xeon(R) Gold 5218R CPU @ 2.10GHz. 
 
 # 3. Experiments
-<!-- For both regression and classification task, see `srnet-clas/README.md` and `srnet-reg/README.md` for
-more details about how to reproduce our experimental results. -->
 
-<!-- Here we show our experimental figures in our paper:
-## Convergence 
-<!-- The convergence curves for all dataset:
-![Regression convergence curve of fitness](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/srnet-reg/IMG/trend_result.png)
-![Classification convergence curve of fitness](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/srnet-clas/result/trend_result.png) -->
-
-## Semantics (Mathematical Expressions)
-![Hidden Semantics](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/IMG/hidden_semantics.png)
-
-Combining these expressions, we can obtain the overall expressions for all NNs:
-![Semantics](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/IMG/semantics.png)
-
-## Comparison
-We compare SRNet to LIME and MAPLE on both regression and classification tasks.
-
-### Regression
-![Regression Comparison](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/IMG/reg_comparison.png)
-
-### Classifiation
-Decision boundary:
-
-![DB of SRNet vs. LIME vs. MAPLE](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/srnet-clas/result/local_db.png)
-
-Accuracy:
-
-![Acc of SRNet vs. LIME vs. MAPLE](https://github.com/LuoYuanzhen/SRNet-GECCO/blob/master/srnet-clas/result/accs.png) -->
 
 # 4. Cite
 Please **cite** our paper if you use the code.
