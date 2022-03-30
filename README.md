@@ -59,8 +59,8 @@ Machine Learning Benchmarks (PMLB), and Feynman Symbolic Regression Benchmarks (
 
 ![Regression convergence curve of fitness](https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png)
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="80%">
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="%60">
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="%40">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="60%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="40%">
 
 
 
