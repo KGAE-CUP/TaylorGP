@@ -12,13 +12,6 @@ This paper has been accepted by GECCO-22, see our paper for more.
 
 # 2. Code
 
-## Projects
-
-<!-- Note that for the simplicity of experimental analysis, we divide the SRNet into 2 projects, namely 
-**srnet-clas** and **srnet-reg**, for classification task and regression task respectively. It is easy
-to combine both projects into one single project since the code of SRNet (package at `srnet-clas/CGPNet` 
-or `srnet-reg/CGPNet`) is easy to implement for both classification task and regression task. -->
-
 ## Requirements
 
 Make sure you have installed the following python version and pacakges before start running our code:
@@ -45,10 +38,18 @@ Our experiments were running in Ubuntu 18.04 with Intel(R) Xeon(R) Gold 5218R CP
 ## Examples
 
 We provide an example to test whether the module required by Taylor GP is successfully installed: 
+
+```python
 python TaylorGP.py
+```
 
 In addition, you can run the specified dataset through the following method: 
+
+````python
 python TaylorGP.py --fileName="Feynman/F24.tsv"
+````
+
+
 
 # 3. Experiments
 
@@ -64,12 +65,21 @@ The details of these benchmarks are listed in the [appendix](https://github.com/
 
 We compare TaylorGP with two kinds of baseline algorithms \footnote{The nine baseline algorithms are implemented in [SRBench](https://github.com/cavalab/srbench) : four symbolic regression methods and five machine learning methods. The symbolic regression methods include [**GPlearn**](https://github.com/trevorstephens/gplearn), FFX , geometric semantic genetic programming (**GSGP**) and bayesian symbolic regression (**BSR**). The machine learning methods include linear regression (**LR**), kernel ridge regression (**KR**), random forest regression (**RF**), support vector machines (**SVM**), and **XGBoost** . 
 
-As shown in the figure below , we illustrate the normalized R^2 scores of the ten algorithms running 30 times on all benchmarks. Since the normalized $R^2$ closer to 1 indicates better results, overall TaylorGP can find more accurate results than other algorithms.
+As shown in the figure below , we illustrate the normalized **R^2 scores** of the ten algorithms running 30 times on all benchmarks. Since the normalized $R^2$ closer to 1 indicates better results, overall TaylorGP can find more accurate results than other algorithms.
 
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="50%">
 
+**Normalized R^2 comparisons of the ten SR methods on classical Symbolic Regression Benchmarks**
 
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="50%">
 
+**Normalized R^2 comparisons of the ten SR methods on Feynman Symbolic Regression Benchmarks**
+
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/AIFeynman.jpg" width="50%">
+
+**Normalized R^2 comparisons of the ten SR methods on Penn Machine Learning Benchmarks**
+
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/ML_father.jpg" width="50%">
 
 # 4. Cite
 
