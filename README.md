@@ -76,11 +76,11 @@ Figure \ref{fig:GECCO_Feynman_ML_Box} illustrates that TaylorGP, when compared w
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width=100/>
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width=100/>
 </center>
-<center>
+<figure>
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="30%"/>
-</center>
+</figure>
 
 
 
