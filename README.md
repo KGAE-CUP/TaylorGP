@@ -69,13 +69,6 @@ As shown in the figure below , we illustrate the normalized R^2 scores of the te
 <img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="50%">
 
 
-Figure \ref{fig:GECCO_Feynman_ML_Box} illustrates that TaylorGP, when compared with the nine baseline algorithms, can obtain more accurate and stable results on the two benchmarks, SRB and FSRB. However, on the benchmark PMLB, the two algorithms, FFX and XGBoost, outperform TaylorGP. 
-
-
-
-<center class="half">
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="50%"/><img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="50%"/><img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="50%"/>
-</center>
 
 
 # 4. Cite
