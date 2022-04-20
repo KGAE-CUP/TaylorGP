@@ -1,0 +1,17 @@
+README.md
+setup.py
+src/taylorGP/TaylorGP.py
+src/taylorGP/__init__.py
+src/taylorGP/_global.py
+src/taylorGP/_program.py
+src/taylorGP/calTaylor.py
+src/taylorGP/fitness.py
+src/taylorGP/functions.py
+src/taylorGP/genetic.py
+src/taylorGP/judge_bound.py
+src/taylorGP/utils.py
+src/testTaylorGP.egg-info/PKG-INFO
+src/testTaylorGP.egg-info/SOURCES.txt
+src/testTaylorGP.egg-info/dependency_links.txt
+src/testTaylorGP.egg-info/requires.txt
+src/testTaylorGP.egg-info/top_level.txt

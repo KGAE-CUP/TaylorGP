@@ -1,0 +1,7 @@
+README.md
+setup.py
+taylorGP/testTaylorGP.egg-info/PKG-INFO
+taylorGP/testTaylorGP.egg-info/SOURCES.txt
+taylorGP/testTaylorGP.egg-info/dependency_links.txt
+taylorGP/testTaylorGP.egg-info/requires.txt
+taylorGP/testTaylorGP.egg-info/top_level.txt
