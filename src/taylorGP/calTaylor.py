@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 # import timeout_decorator
 import copy
 import itertools
-from getCombinatorics import get_combinatorics
+from getCombinatorics import get_combinatorics, get_combinatorics_byk
 
 CountACC = 0.0
 
@@ -230,17 +230,18 @@ class Metrics:
         else:
             taylorNum = len(Taylor)
             f = str(Taylor[0])
-            ret = get_combinatorics(varNum, taylorNum)
-            for i in range(taylorNum):
-                if Taylor[i + 1] >= 0:
+            ret = get_combinatorics_byk(varNum, taylorNum, k)
+            newRange = min(taylorNum - 1, len(ret))
+            print(newRange)
+            for i in range(newRange):
+                if Taylor[i + 1] > 0:
                     f += '+' + str(Taylor[i + 1])
                     for j in range(varNum):
-                        f += '*(x' + str(j + 1) + '-' + str(self.expantionPoint[j]) + ')**' + str(ret[i][varNum - j - 1])
-                else:
+                        f += '*(x' + str(j) + '-' + str(self.expantionPoint[j]) + ')**' + str(ret[i][varNum - 1 - j])
+                elif Taylor[i + 1] < 0:
                     f += str(Taylor[i + 1])
                     for j in range(varNum):
-                        f += '*(x' + str(j + 1) + '-' + str(self.expantionPoint[j]) + ')**' + str(ret[i][varNum - j - 1])
-
+                        f += '*(x' + str(j) + '-' + str(self.expantionPoint[j]) + ')**' + str(ret[i][varNum - 1 - j])
             f_taylor = sympify(f)
             f_taylor = f_taylor.expand()
             f_split = str(f_taylor).split()
