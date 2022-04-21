@@ -16,7 +16,7 @@ def combine(n, m, tri):
         sub = 1
         mo = 1
         for i in range(k):
-            sub *= m - i
+            sub *= n - i
             mo *= i + 1
         return sub / mo
 

@@ -904,7 +904,7 @@ def cal_Taylor_features(varNum, dataSet, Y=None):
 if __name__ == '__main__':
     Global()
     # fileName = "D:\PYcharm_program\Test_everything\Bench_0.15\BenchMark_44.tsv"
-    fileName = "data/example.tsv"
+    fileName = "example.tsv"
     X_Y = np.loadtxt(fileName, dtype=np.float, skiprows=1)
     for i in [1]:
         # cal_Taylor_features(varNum=2, fileName="example.tsv")
