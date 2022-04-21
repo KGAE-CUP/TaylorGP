@@ -383,6 +383,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                  metric.judge_monotonicity()])
             print(qualified_list)
             end_fitness, self.sympy_program = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
+        self.sympy_program = simplify(self.sympy_program)#simplify could simplify expression that not symbols
         print('fitness_and_program', end_fitness, self.sympy_program, sep=' ')
         average_fitness += end_fitness
 
