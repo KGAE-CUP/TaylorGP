@@ -54,9 +54,9 @@ python TaylorGP.py --fileName="Feynman/F24.tsv"
 We evaluate the performance of TaylorGP on three kinds of benchmarks: classical Symbolic Regression Benchmarks (**SRB**), Penn
 Machine Learning Benchmarks (**PMLB**), and Feynman Symbolic Regression Benchmarks (**FSRB**) .(You could get them from directories GECCO, PMLB and Feynman respectively).The distribution of the total 81 benchmark sizes by samples and features is shown in the following. 
 
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/datasets_size.png" width="50%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/datasets_size.png" width="50%">
 
-The details of these benchmarks are listed in the [appendix](https://github.com/KGAE-CUP/TaylorGP/blob/main/img/Appendix_Taylor_Symbolic_Regression_GECCO2022.pdf).
+The details of these benchmarks are listed in the [appendix](https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/Appendix_Taylor_Symbolic_Regression_GECCO2022.pdf).
 
 ### Performance
 
@@ -64,19 +64,19 @@ We compare TaylorGP with two kinds of baseline algorithms \footnote{The nine bas
 
 As shown in the figure below , we illustrate the normalized **R^2 scores** of the ten algorithms running 30 times on all benchmarks. Since the normalized R^2 closer to 1 indicates better results, overall TaylorGP can find more accurate results than other algorithms.
 
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/contact.jpg" width="50%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/contact.jpg" width="50%">
 
 Normalized R^2 comparisons of the ten SR methods on **classical Symbolic Regression Benchmarks**
 
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/GECCO.jpg" width="50%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/GECCO.jpg" width="50%">
 
 Normalized R^2 comparisons of the ten SR methods on **Feynman Symbolic Regression Benchmarks**
 
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/AIFeynman.jpg" width="50%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/AIFeynman.jpg" width="50%">
 
 Normalized R^2 comparisons of the ten SR methods on **Penn Machine Learning Benchmarks**
 
-<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/img/ML_father.jpg" width="50%">
+<img src="https://github.com/KGAE-CUP/TaylorGP/blob/main/data/img/ML_father.jpg" width="50%">
 
 ## 4. Cite
 
