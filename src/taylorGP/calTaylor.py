@@ -58,7 +58,7 @@ class Point:
 class Metrics:
     name = 'Good calculator'
 
-    def __init__(self, fileName=0,dataSet =None, model=None, f=None, classNum=8, varNum=1):
+    def __init__(self, fileName=0, dataSet=None, model=None, f=None, classNum=8, varNum=1):
         self.model = model
         self.f_taylor = 0
         self.f_low_taylor = 0
@@ -121,10 +121,10 @@ class Metrics:
         self._x_left, self._x_right = 0, 0
         # try:
         if varNum == 1:
-            self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var()
+            self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_xvar(1)
             self._X = [self.X0]
         elif varNum == 2:
-            self.taylor = self._getData_2var()
+            self.taylor = self._getData_xvar(2)
         elif varNum == 3:
             # self.taylor = self._getData_3var()
             self.taylor = self._getData_xvar(3)
@@ -143,6 +143,95 @@ class Metrics:
         #     print('metrix error')
         #     self.taylor = np.array([1] * 10000)
         self.f_taylor = self._getTaylorPolynomial(varNum=varNum)
+
+    # yxGao
+    def _getData_xvar(self, n):
+        start = time.time()
+
+        def generate_tri(amount):
+            triang = np.ones((amount, amount), dtype=int)
+            for i in range(2, triang.shape[0]):
+                triang[i][1:i] = triang[i - 1][1:i] + triang[i - 1][0:i - 1]
+            return triang
+
+        def combox(n, m, tri):
+            k = min(m, n - m)
+            if k > 2:
+                return tri[n][min(m, n - m)]
+            else:
+                sub = 1
+                mo = 1
+                for i in range(k):
+                    sub *= m - i
+                    mo *= i + 1
+                return sub / mo
+
+        def get_data(n, lines, matrix):
+            tri = generate_tri(40)  #
+            pre_sum = 0
+            cur_sum = combox(n, n - 1, tri)  # init C (n + k - 1 , n - 1)
+            cur_k = 1
+            ret = np.ones((lines, lines))
+            for i in range(lines):
+                mark = -1
+                if i < cur_sum:
+                    mark = i - pre_sum
+                elif i == cur_sum:
+                    cur_k += 1
+                    pre_sum = cur_sum
+                    cur_sum += combox(cur_k + n - 1, n - 1, tri)
+                    mark = 0
+                else:
+                    print('error')
+                    # error
+                # make cur_k divide into n combox(cur_k + n - 1, n - 1, tri)
+                c = np.zeros(n, dtype=int)
+
+                cur_idx = 1
+                cp_mk = mark
+                for j in range(n - 1):
+                    while mark >= combox(cur_k + n - 1 - cur_idx, n - 1 - (j + 1), tri):
+                        mark -= combox(cur_k + n - 1 - cur_idx, n - 1 - (j + 1), tri)
+                        cur_idx += 1
+                    c[j + 1] = cur_idx
+                    cur_idx += 1
+                # c[n] = cur_k - np.sum(c[0:n-1])
+                res = np.zeros(n, dtype=int)
+
+                res[:-1] = c[1:] - c[:-1] - 1
+                # if ( 1 ,2 ,3 ) is selected from
+                res[n - 1] = cur_k - np.sum(res[0:n - 1])
+                # print(cur_k,res)
+                for j in range(n):
+                    ret[i][0:] *= matrix[j][0:] ** res[n - 1 - j]
+            print(cur_k)
+            return ret.transpose()
+
+        mmm = self.X.shape[0] - 1  #
+        X = np.zeros((n, mmm))
+        for i in range(n):
+            X[i] = self._X[i][:mmm] - self.expantionPoint[i]
+        # @yxgao taylorNum = ?
+        # @yxgao m = ?
+        A = get_data(n, mmm, X)
+        Taylor = np.linalg.solve(A, self.b)
+        # Taylor_log = np.linalg.solve(A, self.b_log)
+        Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
+        # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
+        self.A = A
+        end = time.time()
+        print("time=", end - start)
+        if n == 1:
+            TaylorNum = 18
+        elif n==2:
+            TaylorNum = 91
+        elif n == 3:
+            TaylorNum = 455
+        elif n == 4:
+            TaylorNum = 1820
+        else:
+            TaylorNum = 6188
+        return Taylor.tolist()[:TaylorNum]  # TaylorNum后期再改
 
     def _getData_1var(self, k=18, taylorNum=18):
 
@@ -203,80 +292,6 @@ class Metrics:
         self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:taylorNum]
         self.A = A
         return Taylor.tolist()[:taylorNum]
-#yxGao
-    def _getData_xvar(self, n):
-        start = time.time()
-        def generate_tri(amount):
-            triang = np.ones((amount, amount), dtype=int)
-            for i in range(2, triang.shape[0]):
-                triang[i][1:i] = triang[i - 1][1:i] + triang[i - 1][0:i - 1]
-            return triang
-
-        def combox(nn, m, tri):
-            return tri[nn][min(m, nn - m)]
-
-        def get_data(n, lines, matrix):
-            tri = generate_tri(40)  #
-            pre_sum = 0
-            cur_sum = combox(n, n - 1, tri)  # init C (n + k - 1 , n - 1)
-            cur_k = 1
-            ret = np.ones((lines, lines))
-            for i in range(lines):
-                mark = -1
-                if i < cur_sum:
-                    mark = i - pre_sum
-                elif i == cur_sum:
-                    cur_k += 1
-                    pre_sum = cur_sum
-                    cur_sum += combox(cur_k + n - 1, n - 1, tri)
-                    mark = 0
-                else:
-                    print('error')
-                    # error
-                # make cur_k divide into n combox(cur_k + n - 1, n - 1, tri)
-                c = np.zeros(n, dtype=int)
-
-                cur_idx = 1
-                cp_mk = mark
-                for j in range(n - 1):
-                    while mark >= combox(cur_k + n - 1 - cur_idx, n - 1 - (j + 1), tri):
-                        mark -= combox(cur_k + n - 1 - cur_idx, n - 1 - (j + 1), tri)
-                        cur_idx += 1
-                    c[j + 1] = cur_idx
-                    cur_idx += 1
-                # c[n] = cur_k - np.sum(c[0:n-1])
-                res = np.zeros(n, dtype=int)
-
-                res[:-1] = c[1:] - c[:-1] - 1
-                # if ( 1 ,2 ,3 ) is selected from
-                res[n - 1] = cur_k - np.sum(res[0:n - 1])
-                # print(cur_k,res)
-                for j in range(n):
-                    ret[i][0:] *= matrix[j][0:] ** res[n - 1 - j]
-            print(cur_k)
-            return ret.transpose()
-
-        mmm = self.X.shape[0] - 1  #
-        X = np.zeros((n, mmm))
-        for i in range(n):
-            X[i] = self._X[i][:mmm] - self.expantionPoint[i]
-        # @yxgao taylorNum = ?
-        # @yxgao m = ?
-        A = get_data(n, mmm, X)
-        Taylor = np.linalg.solve(A, self.b)
-        # Taylor_log = np.linalg.solve(A, self.b_log)
-        Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
-        # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
-        self.A = A
-        end = time.time()
-        print("time=",end-start)
-        if n==3:
-            TaylorNum = 455
-        elif n==4:
-            TaylorNum = 1820
-        else:
-            TaylorNum = 6188
-        return Taylor.tolist()[:TaylorNum]#TaylorNum后期再改
 
     def _getData_3var(self, k=8, taylorNum=455):  #
         n = 3  #
@@ -2172,13 +2187,13 @@ class Metrics:
                 _sub.update({_x[j]: X[j][i]})
             y_pred.append(f.evalf(subs=_sub))
         return y_pred
+
     '''
     @timeout_decorator.timeout(10, use_signals=False)
     def cal_critical_point(self, fx, x):
         if self.varNum == 2:
             return solve([fx[0], fx[1]], [x[0], x[1]])    
     '''
-
 
     def judge_Bound(self):
         if self.nihe_flag == False:
@@ -2750,4 +2765,4 @@ if __name__ == '__main__':
     X_Y = np.loadtxt(fileName, dtype=np.float, skiprows=1)
     for i in [1]:
         # cal_Taylor_features(varNum=2, fileName="example.tsv")
-        cal_Taylor_features(varNum=2,dataSet=X_Y )
+        cal_Taylor_features(varNum=2, dataSet=X_Y)

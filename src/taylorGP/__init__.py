@@ -5,4 +5,4 @@
 """
 __version__ = '0.5.dev0'
 
-__all__ = ['genetic', 'functions', 'fitness', 'he_calTaylor.py', 'judge_bound', "_global" , "_program"]
+__all__ = ['genetic', 'functions', 'fitness', 'he_calTaylor.py', 'judge_bound', "_global", "_program"]

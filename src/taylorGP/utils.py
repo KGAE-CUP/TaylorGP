@@ -10,6 +10,7 @@ import numbers
 import numpy as np
 from joblib import cpu_count
 
+
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 

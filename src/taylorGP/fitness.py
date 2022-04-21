@@ -17,7 +17,6 @@ __all__ = ['make_fitness']
 
 
 class _Fitness(object):
-
     """A metric to measure the fitness of a program.
 
     This object is able to be called with NumPy vectorized arguments and return
@@ -90,8 +89,8 @@ greater_is_better
         raise ValueError('function requires 3 arguments (y, y_pred, w),'
                          ' got %d.' % function.__code__.co_argcount)
     if not isinstance(function(np.array([1, 1]),
-                      np.array([2, 2]),
-                      np.array([1, 1])), numbers.Number):
+                               np.array([2, 2]),
+                               np.array([1, 1])), numbers.Number):
         raise ValueError('function must return a numeric.')
 
     if wrap:
@@ -151,7 +150,7 @@ weighted_pearson = _Fitness(function=_weighted_pearson,
 weighted_spearman = _Fitness(function=_weighted_spearman,
                              greater_is_better=True)
 mean_absolute_error = _Fitness(function=_mean_absolute_error,
-                               greater_is_better=False)   #误差越小越好
+                               greater_is_better=False)  # 误差越小越好
 mean_square_error = _Fitness(function=_mean_square_error,
                              greater_is_better=False)
 root_mean_square_error = _Fitness(function=_root_mean_square_error,
@@ -160,10 +159,10 @@ log_loss = _Fitness(function=_log_loss,
                     greater_is_better=False)
 
 _fitness_map = {
-                'pearson': weighted_pearson,
-                'spearman': weighted_spearman,
-                'mean absolute error': mean_absolute_error,
-                'mse': mean_square_error,
-                'rmse': root_mean_square_error,
-                'log loss': log_loss
-                }
+    'pearson': weighted_pearson,
+    'spearman': weighted_spearman,
+    'mean absolute error': mean_absolute_error,
+    'mse': mean_square_error,
+    'rmse': root_mean_square_error,
+    'log loss': log_loss
+}

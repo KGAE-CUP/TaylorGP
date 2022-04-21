@@ -11,28 +11,30 @@ computer program. It is used for creating and evolving programs used in the
 from copy import copy
 import numpy as np
 from sklearn.utils.random import sample_without_replacement
-from .functions import _Function,_sympol_map
+from .functions import _Function, _sympol_map
 from .utils import check_random_state
-from ._global import set_value,get_value
+from ._global import set_value, get_value
 
-def print_program(program,qualified_list,X,_x):
+
+def print_program(program, qualified_list, X, _x):
     n_features = X.shape[1]
     bias = qualified_list[-3]
     if qualified_list[-1] == 2:
-        program = '-('+str(program) +')'
+        program = '-(' + str(program) + ')'
     partity = qualified_list[-2]
     if partity == 1 or partity == 2:
-        if abs(bias)>1e-5:
-            program = str(program) + '+('+str(bias) +')'
+        if abs(bias) > 1e-5:
+            program = str(program) + '+(' + str(bias) + ')'
     __x = []
     for i in range(X.shape[1]):
-        __x.append('x'+str(i))
+        __x.append('x' + str(i))
     for i in range(X.shape[1]):
-        program = program.replace(__x[i],str(_x[i]))
+        program = program.replace(__x[i], str(_x[i]))
     print(program)
     return program
-class _Program(object):
 
+
+class _Program(object):
     """A program-like representation of the evolved program.
 
     This is the underlying data-structure used by the public classes in the
@@ -144,13 +146,13 @@ class _Program(object):
                  p_point_replace,
                  parsimony_coefficient,
                  random_state,
-                 selected_space = None,
-                 qualified_list = None,
-                 X = None,
+                 selected_space=None,
+                 qualified_list=None,
+                 X=None,
                  transformer=None,
                  feature_names=None,
                  program=None,
-                 eq_write = None):
+                 eq_write=None):
 
         self.function_set = function_set
         self.arities = arities
@@ -166,21 +168,19 @@ class _Program(object):
         self.program = program
         self.selected_space = selected_space
         self.qualified_list = qualified_list
-        self.X =X
+        self.X = X
         self.eq_write = eq_write
-        if self.program is not None :
-            if not self.validate_program() :
+        if self.program is not None:
+            if not self.validate_program():
                 raise ValueError('The supplied program is incomplete.')
             while True:
                 qiantao_flag = self.judge_qiantao(self)
                 if qiantao_flag:
-                    self.build(random_state,self.X)
+                    self.build(random_state, self.X)
                     break
                 break
         else:
-            self.build(random_state,self.X)
-
-
+            self.build(random_state, self.X)
 
         self.raw_fitness_ = None
         self.fitness_ = None
@@ -188,18 +188,19 @@ class _Program(object):
         self._n_samples = None
         self._max_samples = None
         self._indices_state = None
-    def build(self,random_state,X):
+
+    def build(self, random_state, X):
         build_flag = False
         qualified_flag = False
         qiantao_flag = False
         buildNum = 0
         while build_flag == False or qualified_flag == False:
-            buildNum +=1
+            buildNum += 1
             if buildNum > 10000:
-                set_value('TUIHUA_FLAG',True)
+                set_value('TUIHUA_FLAG', True)
             self.program = self.build_program(random_state)
             qiantao_flag = self.judge_qiantao(self)
-            if 'X' in str(self) and qiantao_flag==False:
+            if 'X' in str(self) and qiantao_flag == False:
                 build_flag = True
                 if get_value('TUIHUA_FLAG'):
                     break
@@ -207,24 +208,23 @@ class _Program(object):
                 continue
             y_pred = self.execute(X)
             y_pred_reverse = self.execute(X * (-1))
-            qualified_flag = self.isQualified(y_pred,y_pred_reverse)
+            qualified_flag = self.isQualified(y_pred, y_pred_reverse)
 
-    def isQualified(self,y_pred,y_pred_reverse):
+    def isQualified(self, y_pred, y_pred_reverse):
         partity = False
-        monotonicity =False
+        monotonicity = False
         if self.qualified_list[0] == -1:
             partity = True
-        elif self.qualified_list[0] == self.judge_program_parity(y_pred,y_pred_reverse):
+        elif self.qualified_list[0] == self.judge_program_parity(y_pred, y_pred_reverse):
             partity = True
         if self.qualified_list[1] == -1:
             monotonicity = True
         elif self.qualified_list[1] == self.judge_program_monotonicity(y_pred):
             monotonicity = True
-        if partity and monotonicity :
+        if partity and monotonicity:
             return True
         else:
             return False
-
 
     def build_program(self, random_state):
         """Build a naive random program.
@@ -258,10 +258,10 @@ class _Program(object):
         program = [function1]
         terminal_stack = [function1.arity]
         right_subttree_flag = True
-        if function1.arity == 1 :
+        if function1.arity == 1:
             right_subttree_flag = False
 
-        if space[1] in ['add','sub','mul','div','sin','cos','log','exp','sqrt']:
+        if space[1] in ['add', 'sub', 'mul', 'div', 'sin', 'cos', 'log', 'exp', 'sqrt']:
             function2 = self.function_set[func_int_map[space[1]]]
             program.append(function2)
             terminal_stack.append(function2.arity)
@@ -278,12 +278,10 @@ class _Program(object):
                     return program
                 terminal_stack[-1] -= 1
 
-
         while terminal_stack:
             depth = len(terminal_stack)
             choice = self.n_features + len(self.function_set)
             choice = random_state.randint(choice)
-
 
             # Determine if we are adding a function or terminal
             if (depth < max_depth) and (method == 'full' or
@@ -331,7 +329,7 @@ class _Program(object):
         # We should never get here
         return None
 
-    def judge_qiantao(self,f):
+    def judge_qiantao(self, f):
         f = str(f)
         if 'zoo' in f or 'nan' in f or 'I' in f:
             return True
@@ -353,6 +351,7 @@ class _Program(object):
                     strNum -= 1
                 ind += 1
         return False
+
     def validate_program(self):
         """Rough check that the embedded program in the object is valid."""
         terminals = [0]
@@ -365,12 +364,13 @@ class _Program(object):
                     terminals.pop()
                     terminals[-1] -= 1
         return terminals == [-1]
+
     def get_expression(self):
         """return a sympy formula."""
         terminals = [0]
         output = ''
         stack = []
-        X_num = [] #the variable of the sympy formula
+        X_num = []  # the variable of the sympy formula
         for i, node in enumerate(self.program):
             if isinstance(node, _Function):
                 terminals.append(node.arity)
@@ -393,7 +393,7 @@ class _Program(object):
                     else:
                         output += self.feature_names[node]
                 else:
-                    if node<0:
+                    if node < 0:
                         output += '(%.3f)' % node
                     else:
                         output += '%.3f' % node
@@ -493,7 +493,7 @@ class _Program(object):
         # We should never get here
         return None
 
-    def _depth(self):#层次遍历顺序的terminal是错误的
+    def _depth(self):  # 层次遍历顺序的terminal是错误的
         """Calculates the maximum depth of the program tree."""
         terminals = [0]
         depth = 1
@@ -530,7 +530,7 @@ class _Program(object):
         # Check for single-node programs
         node = self.program[0]
         if isinstance(node, float):
-            return np.repeat(node,X.shape[0])
+            return np.repeat(node, X.shape[0])
         if isinstance(node, int):
             return X[:, node]
 
@@ -549,7 +549,7 @@ class _Program(object):
                 function = apply_stack[-1][0]
                 terminals = [np.repeat(t, X.shape[0]) if isinstance(t, float)
                              else X[:, t] if isinstance(t, int)
-                             else t for t in apply_stack[-1][1:]]
+                else t for t in apply_stack[-1][1:]]
                 intermediate_result = function(*terminals)
                 if len(apply_stack) != 1:
                     apply_stack.pop()
@@ -638,13 +638,14 @@ class _Program(object):
         raw_fitness = self.metric(y, y_pred, sample_weight)
 
         return raw_fitness
-    def judge_program_parity(self,y_pred,y_pred_reverse):
+
+    def judge_program_parity(self, y_pred, y_pred_reverse):
         '''Judging the parity of randomly generated individuals！！！'''
         Jishu, Oushu = False, False
-        y_1 = abs(y_pred + y_pred_reverse ) <0.01
+        y_1 = abs(y_pred + y_pred_reverse) < 0.01
         if True in y_1:
             Jishu = True
-        y_2 = abs(y_pred - y_pred_reverse ) <0.01
+        y_2 = abs(y_pred - y_pred_reverse) < 0.01
         if True in y_2:
             Oushu = True
         if Jishu == True and Oushu == False:
@@ -653,16 +654,18 @@ class _Program(object):
             return 2
         return -1
 
-    def judge_program_monotonicity(self,y_pred):
-        Increase,Decrease = False,False
+    def judge_program_monotonicity(self, y_pred):
+        Increase, Decrease = False, False
 
         Y_index = np.argsort(y_pred, axis=0)
         Y_index = Y_index.reshape(-1)
         for i in range(1, Y_index.shape[0]):
-            Increase_flag = not any([(self.X[Y_index[i]][j] < self.X[Y_index[i - 1]][j]) for j in range(self.X.shape[1])])
+            Increase_flag = not any(
+                [(self.X[Y_index[i]][j] < self.X[Y_index[i - 1]][j]) for j in range(self.X.shape[1])])
             if Increase_flag:
                 Increase = True
-            Decrease_flag = not any([(self.X[Y_index[i]][j] > self.X[Y_index[i - 1]][j]) for j in range(self.X.shape[1])])
+            Decrease_flag = not any(
+                [(self.X[Y_index[i]][j] > self.X[Y_index[i - 1]][j]) for j in range(self.X.shape[1])])
             if Decrease_flag:
                 Decrease = True
 
@@ -689,7 +692,7 @@ class _Program(object):
         """
         if parsimony_coefficient is None:
             parsimony_coefficient = self.parsimony_coefficient
-        penalty = parsimony_coefficient * len(self.program) * self.metric.sign#sign控制正负号--越大越好还是越小越好
+        penalty = parsimony_coefficient * len(self.program) * self.metric.sign  # sign控制正负号--越大越好还是越小越好
         return self.raw_fitness_ - penalty
 
     def get_subtree(self, random_state, program=None):
@@ -734,7 +737,7 @@ class _Program(object):
         """Return a copy of the embedded program."""
         return copy(self.program)
 
-    def crossover(self, donor, random_state,qualified_list):
+    def crossover(self, donor, random_state, qualified_list):
         """Perform the crossover genetic operation on the program.
 
         Crossover selects a random subtree from the embedded program to be
@@ -761,25 +764,25 @@ class _Program(object):
             op_index = random_state.randint(5)
             if get_value('TUIHUA_FLAG'):
                 break
-            elif qualified_list == [1,-1] and (op_index == 2 or op_index==3):
+            elif qualified_list == [1, -1] and (op_index == 2 or op_index == 3):
                 continue
-            elif qualified_list == [2, -1] and op_index == 4 and self.n_features>1:
+            elif qualified_list == [2, -1] and op_index == 4 and self.n_features > 1:
                 continue
             elif (qualified_list == [-1, 1] or qualified_list == [-1, 2]) and (op_index == 1 or op_index == 3):
                 continue
-            elif (qualified_list == [1, 1] or qualified_list == [-1, 2]) and (op_index == 1 or op_index == 2 or op_index == 3):
+            elif (qualified_list == [1, 1] or qualified_list == [-1, 2]) and (
+                    op_index == 1 or op_index == 2 or op_index == 3):
                 continue
             qualified_flag = True
 
-
-        if op_index <4 :
+        if op_index < 4:
             program = self.function_set[op_index:op_index + 1] + self.program[:] + donor[:]
-            return  program,None,None
+            return program, None, None
         else:
             x_index = random_state.randint(self.n_features)
             if x_index not in self.program:
                 for i in range(len(self.program)):
-                    if isinstance(self.program[i],int):
+                    if isinstance(self.program[i], int):
                         x_index = self.program[i]
                         break
 
@@ -787,10 +790,11 @@ class _Program(object):
                 if isinstance(self.program[node], _Function) == False and self.program[node] == x_index:
                     terminal = donor
                     program = self.changeTo(self.program, node, terminal)
-            return program,None,None
+            return program, None, None
 
-    def changeTo(self,program,node, terminal):
-        return program[:node] + terminal + program[node+1:]
+    def changeTo(self, program, node, terminal):
+        return program[:node] + terminal + program[node + 1:]
+
     def subtree_mutation(self, random_state):
         """Perform the subtree mutation operation on the program.
 
