@@ -120,25 +120,25 @@ class Metrics:
         self.nihe_flag = False
         self._mid_left, self._mid_right = 0, 0
         self._x_left, self._x_right = 0, 0
-        # try:
-        if varNum == 1:
-            self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var
-            self._X = [self.X0]
-        elif varNum == 2:
-            self.taylor = self._getData_xvar(2)
-        elif varNum == 3:
-            self.taylor = self._getData_xvar(3)
-        elif varNum == 4:
-            self.taylor = self._getData_xvar(4)
-        elif varNum == 5:
-            self.taylor = self._getData_xvar(5)
-        elif varNum == 6:
-            self.taylor = self._getData_xvar(6)
-        else:
+        try:
+            if varNum == 1:
+                self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var
+                self._X = [self.X0]
+            elif varNum == 2:
+                self.taylor = self._getData_xvar(2)
+            elif varNum == 3:
+                self.taylor = self._getData_xvar(3)
+            elif varNum == 4:
+                self.taylor = self._getData_xvar(4)
+            elif varNum == 5:
+                self.taylor = self._getData_xvar(5)
+            elif varNum == 6:
+                self.taylor = self._getData_xvar(6)
+            else:
+                self.taylor = np.array([1] * 10000)
+        except BaseException:#防止程序因矩阵非满秩矩阵而报错停止
+            print('metrix error')
             self.taylor = np.array([1] * 10000)
-        # except BaseException:
-        #     print('metrix error')
-        #     self.taylor = np.array([1] * 10000)
         self.f_taylor = self._getTaylorPolynomial(varNum=varNum)
 
     def _getData_1var(self, k=18, taylorNum=18):
