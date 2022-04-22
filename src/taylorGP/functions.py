@@ -16,7 +16,6 @@ __all__ = ['make_function']
 
 
 class _Function(object):
-
     """A representation of a mathematical relationship, a node in a program.
 
     This object is able to be called with NumPy vectorized arguments and return
@@ -148,12 +147,15 @@ def _sigmoid(x1):
     """Special case of logistic function to transform to probabilities."""
     with np.errstate(over='ignore', under='ignore'):
         return 1 / (1 + np.exp(-x1))
+
+
 def _exp(x1):
     """
     Special case of exp function to transform to probabilities.
     """
     with np.errstate(over='ignore', under='ignore'):
         return np.exp(x1)
+
 
 add2 = _Function(function=np.add, name='add', arity=2)
 sub2 = _Function(function=np.subtract, name='sub', arity=2)
@@ -186,9 +188,9 @@ _function_map = {'add': add2,
                  'sin': sin1,
                  'cos': cos1,
                  'tan': tan1,
-                 'exp':exp1}
+                 'exp': exp1}
 _sympol_map = {'add': '+',
-                 'sub': '-',
-                 'mul': '*',
-                 'div': '/',
-                 }
+               'sub': '-',
+               'mul': '*',
+               'div': '/',
+               }
