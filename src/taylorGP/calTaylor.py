@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 # import timeout_decorator
 import copy
 import itertools
-from getCombinatorics import get_combinatorics, get_combinatorics_byk
+from .getCombinatorics import get_combinatorics, get_combinatorics_byk
 
 CountACC = 0.0
 
@@ -170,7 +170,6 @@ class Metrics:
 
     # yxGao
     def _getData_xvar(self, n):
-        start = time.time()
         mmm = self.X.shape[0] - 1  #
         X = np.zeros((n, mmm))
         for i in range(n):
@@ -188,8 +187,6 @@ class Metrics:
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
         self.A = A
-        end = time.time()
-        print("time=", end - start)
         if n == 1:
             TaylorNum = 18
         elif n == 2:
@@ -232,7 +229,6 @@ class Metrics:
             f = str(Taylor[0])
             ret = get_combinatorics_byk(varNum, taylorNum, k)
             newRange = min(taylorNum - 1, len(ret))
-            print(newRange)
             for i in range(newRange):
                 if Taylor[i + 1] > 0:
                     f += '+' + str(Taylor[i + 1])
@@ -669,7 +665,6 @@ class Metrics2(Metrics):
             if self.cal_power_expr(f_taylor[i - 1] + f_taylor[i]) <= 4:
                 f_low_taylor += f_taylor[i - 1] + f_taylor[i]
         self.f_low_taylor = sympify(f_low_taylor)
-        print(f_low_taylor)
         y_pred_low = self._calY(self.f_low_taylor, self._x, self._X)
         self.low_nmse = mean_squared_error(self.Y, y_pred_low)
         if self.low_nmse < 1e-5:
