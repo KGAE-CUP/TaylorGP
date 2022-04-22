@@ -354,7 +354,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                         print("data is same in :" + str(i) + " " + str(j))            
             '''
             #使用去重后的数据计算Taylor展开式
-            metric = Metrics(varNum=X.shape[1], dataSet=X_Y)
+            metric = Metrics(varNum=X.shape[1], dataSet=np.unique(X_Y, axis=0))
             loopNum += 1
             Metric.append(metric)
             if metric.nmse >1000:
@@ -382,7 +382,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             lr_est = LinearRegression().fit(X, y)
             print('coef: ', lr_est.coef_)
             print('intercept: ', lr_est.intercept_)
-            lr_nmse = mean_squared_error(lr_est.predict(X),y)
+            lr_nmse = mean_squared_error(lr_est.predict(X),y,squared=False)
             if lr_nmse < metric.nmse:
                 metric.nmse = lr_nmse
                 metric.low_nmse = lr_nmse
