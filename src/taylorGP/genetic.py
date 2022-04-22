@@ -8,14 +8,15 @@ computer programs.
 # Author: Trevor Stephens <trevorstephens.com>
 #
 # License: BSD 3 clause
+from sklearn.linear_model import LinearRegression
 from sympy import *
 import itertools
-from abc import ABCMeta, abstractmethod  # @abc.abstractmethod装饰器后严格控制子类必须实现这个方法
+from abc import ABCMeta, abstractmethod #@abc.abstractmethod装饰器后严格控制子类必须实现这个方法
 from time import time
 from warnings import warn
 import math
 import numpy as np
-from joblib import Parallel, delayed  # 自动创建进程池执行并行化操作
+from joblib import Parallel, delayed #自动创建进程池执行并行化操作
 from scipy.stats import rankdata
 from sklearn.base import BaseEstimator
 from sklearn.base import RegressorMixin, TransformerMixin, ClassifierMixin
@@ -25,17 +26,16 @@ from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import mean_squared_error  # 均方误差
 
-from ._program import _Program, print_program
+from ._program import _Program,print_program
 from .fitness import _fitness_map, _Fitness
 from .functions import _function_map, _Function, sig1 as sigmoid
 from .utils import _partition_estimators
 from .utils import check_random_state
-from .judge_bound import select_space, cal_spacebound
-from ._global import _init, set_value
-from .calTaylor import Metrics, Metrics2
-
+from .judge_bound import select_space , cal_spacebound
+from ._global import _init,set_value
+from .calTaylor import Metrics,Metrics2
 _init()
-set_value('TUIHUA_FLAG', False)
+set_value('TUIHUA_FLAG',False)
 
 __all__ = ['SymbolicRegressor', 'SymbolicClassifier', 'SymbolicTransformer']
 
@@ -60,14 +60,14 @@ def _parallel_evolve(n_programs, parents, X, y, sample_weight, seeds, params):
     max_samples = params['max_samples']
     feature_names = params['feature_names']
     selected_space = params['selected_space']
-    qualified_list = params['qualified_list']  # 合格判别标准
-    eq_write = params['eq_write']  # 用于将所有生成的公式写入eq_write文件
+    qualified_list = params['qualified_list'] #合格判别标准
+    eq_write = params['eq_write'] #用于将所有生成的公式写入eq_write文件
 
     max_samples = int(max_samples * n_samples)
 
     def _tournament():
         """Find the fittest individual from a sub-population."""
-        contenders = random_state.randint(0, len(parents), tournament_size)
+        contenders = random_state.randint(0, len(parents),tournament_size)
         fitness = [parents[p].fitness_ for p in contenders]
         if metric.greater_is_better:
             parent_index = contenders[np.argmax(fitness)]
@@ -92,7 +92,7 @@ def _parallel_evolve(n_programs, parents, X, y, sample_weight, seeds, params):
                 # crossover
                 donor, donor_index = _tournament()
                 program, removed, remains = parent.crossover(donor.program,
-                                                             random_state, qualified_list)
+                                                             random_state,qualified_list)
                 genome = {'method': 'Crossover',
                           'parent_idx': parent_index,
                           # 'parent_nodes': removed,
@@ -135,10 +135,10 @@ def _parallel_evolve(n_programs, parents, X, y, sample_weight, seeds, params):
                            feature_names=feature_names,
                            random_state=random_state,
                            program=program,
-                           selected_space=selected_space,
-                           qualified_list=qualified_list,
-                           X=X,
-                           eq_write=eq_write)
+                           selected_space = selected_space,
+                           qualified_list = qualified_list,
+                           X =X,
+                           eq_write =  eq_write)
         program.parents = genome
 
         # Draw samples, using sample weights, and then fit
@@ -169,6 +169,7 @@ def _parallel_evolve(n_programs, parents, X, y, sample_weight, seeds, params):
 
 
 class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
+
     """Base class for symbolic regression / classification estimators.
 
     Warning: This class should not be used directly.
@@ -231,7 +232,8 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
-        self.sympy_program = None
+        self.sympy_program =None
+        self.end_fitness = None
 
     def _verbose_reporter(self, run_details=None):
         """A report of the progress of the evolution process.
@@ -274,7 +276,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                                      oob_fitness,
                                      remaining_time))
 
-    def CalTaylorFeatures(self, f_taylor, _x, X, Y, Pop, repeatNum):
+    def CalTaylorFeatures(self,f_taylor, _x, X, Y, Pop, repeatNum):
         print('In CalTaylorFeatures')
         metric = Metrics2(f_taylor, _x, X, Y)
         if metric.judge_Low_polynomial():
@@ -283,12 +285,11 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             if metric.judge_additi_separability():
                 print('Separability of addition')
                 print('===========================start left recursion============================')
-                low_mse1, f_add1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left,
-                                                          metric.Y_left,
-                                                          Pop // 2, repeatNum)
+                low_mse1, f_add1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
+                                                     Pop // 2, repeatNum)
                 print('===========================start right recursion============================')
                 low_mse2, f_add2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                          metric.Y_right, Pop // 2, repeatNum)
+                                                     metric.Y_right, Pop // 2, repeatNum)
 
                 f_add = sympify(str(f_add1) + '+' + str(f_add2))
                 try:
@@ -304,10 +305,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 print('multiplicative separability')
                 print('===========================start left recursion============================')
                 low_mse1, f_multi1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left,
-                                                            metric.Y_left, Pop // 2, repeatNum)
+                                                       metric.Y_left, Pop // 2, repeatNum)
                 print('===========================start right recursion============================')
                 low_mse2, f_multi2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                            metric.Y_right, Pop // 2, repeatNum)
+                                                       metric.Y_right, Pop // 2, repeatNum)
 
                 f_multi = sympify('(' + str(f_multi1) + ')*(' + str(f_multi2) + ')')
                 try:
@@ -324,13 +325,15 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         qualified_list.extend(
             [metric.judge_Bound(), metric.f_low_taylor, metric.low_nmse, metric.bias, metric.judge_parity(),
              metric.judge_monotonicity()])
-        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list, Pop, metric.judge_Low_polynomial())
+        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list,Pop,metric.judge_Low_polynomial())
 
-    def fit(self, X, y):
+    def fit(self,X,y):
         # np.expand_dims(y,axis=1)
         y = y[:, np.newaxis]
         # y= y.reshape(-1)
-        X_Y = np.concatenate((X, y), axis=1)
+        X_Y = np.concatenate((X,y),axis=1)
+        print(X_Y.shape)
+
         # X_Y = np.array(X)[1:].astype(np.float)
         x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28, x29 = symbols(
             "x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20,x21,x22,x23,x24,x25,x26,x27,x28,x29 ")
@@ -343,9 +346,20 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         loopNum = 0
         Metric = []
         while True:
+            print(X_Y.shape)
+            '''
+            for i in range(X_Y.shape[0]):
+                for j in range(i + 1, X_Y.shape[0]):
+                    if ((X_Y[i] == X_Y[j]).all()):
+                        print("data is same in :" + str(i) + " " + str(j))            
+            '''
+            #使用去重后的数据计算Taylor展开式
             metric = Metrics(varNum=X.shape[1], dataSet=X_Y)
             loopNum += 1
             Metric.append(metric)
+            if metric.nmse >1000:
+                print("use Linear regression")
+                break
             if loopNum == 2 and X.shape[1] <= 2:
                 break
             elif loopNum == 5 and (X.shape[1] > 2 and X.shape[1] <= 3):
@@ -364,16 +378,33 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         if metric.nmse < 0.1:
             metric.nihe_flag = True
         else:
+            print("call  Linear regression to change nmse and f_taylor")
+            lr_est = LinearRegression().fit(X, y)
+            print('coef: ', lr_est.coef_)
+            print('intercept: ', lr_est.intercept_)
+            lr_nmse = mean_squared_error(lr_est.predict(X),y)
+            if lr_nmse < metric.nmse:
+                metric.nmse = lr_nmse
+                metric.low_nmse = lr_nmse
+                f = str(lr_est.intercept_[0])
+                for i in range(X.shape[1]):
+                    if lr_est.coef_[0][i] >= 0:
+                        f += '+' + str(lr_est.coef_[0][i]) + '*x' + str(i)
+                    else:
+                        f += str(lr_est.coef_[0][i]) + '*x' + str(i)
+                print("f_lr and nmse_lr"+f + "  "+str(lr_nmse))
+                metric.f_taylor = sympify(f)
+                metric.f_low_taylor = sympify(f)
             metric.bias = 0.
-            print('Fitting failed')
+            if lr_nmse < 0.1:
+                print('Fitting failed')
         time_end2 = time()
         print('Pretreatment_time_cost', (time_end2 - time_start2) / 3600, 'hour')
-        end_fitness, self.sympy_program = None, None
+        self.end_fitness, self.sympy_program = None, None
         if metric.judge_Low_polynomial():
-            end_fitness, self.sympy_program = metric.low_nmse, metric.f_low_taylor
-        elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability()):
-            end_fitness, self.sympy_program = self.CalTaylorFeatures(metric.f_taylor, _x[:X.shape[1]], X, y,
-                                                                     self.population_size, 11111)
+            self.end_fitness, self.sympy_program = metric.low_nmse, metric.f_low_taylor
+        elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
+            self.end_fitness,self.sympy_program = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
         else:
             qualified_list = []
             qualified_list.extend(
@@ -384,24 +415,23 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                  metric.judge_parity(),
                  metric.judge_monotonicity()])
             print(qualified_list)
-            end_fitness, self.sympy_program = self.Taylor_Based_SR(_x, X, metric.change_Y(y), qualified_list,
-                                                                   self.population_size, metric.low_nmse < 1e-5)
-        self.sympy_program = simplify(self.sympy_program)  # simplify could simplify expression that not symbols
-        print('fitness_and_program', end_fitness, self.sympy_program, sep=' ')
-        average_fitness += end_fitness
+            self.end_fitness, self.sympy_program = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
+        self.sympy_program = simplify(self.sympy_program)#simplify could simplify expression that not symbols
+        print('fitness_and_program', self.end_fitness, self.sympy_program, sep=' ')
+        average_fitness += self.end_fitness
+
 
         time_end1 = time()
         print('overall_time_cost', (time_end1 - time_start1) / 3600 / repeat, 'hour')
         print('fitness = ', average_fitness / repeat)
 
         # return program
-
-    def Taylor_Based_SR(self, _x, X, Y, qualified_list, Pop, low_polynomial):
+    def Taylor_Based_SR( self,_x, X, Y, qualified_list,Pop, low_polynomial):
         f_low_taylor = qualified_list[-5]
         f_low_taylor_mse = qualified_list[-4]
         if low_polynomial == False:
             print(qualified_list)
-            self.population_size = Pop
+            self.population_size=Pop
             self._fit(X, Y, qualified_list)
             if self._program.raw_fitness_ > f_low_taylor_mse:
                 print(f_low_taylor, f_low_taylor_mse, sep='\n')
@@ -410,8 +440,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 return self._program.raw_fitness_, print_program(self._program.get_expression(), qualified_list, X, _x)
         else:
             return f_low_taylor_mse, f_low_taylor
-
-    def _fit(self, X, y, qualified_list, sample_weight=None):
+    def _fit(self, X, y,qualified_list,sample_weight=None):
         """Fit the Genetic Program according to X, y.
 
         Parameters
@@ -432,7 +461,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             Returns self.
 
         """
-        low_bound, high_bound, var_bound = qualified_list[0][0][0], qualified_list[0][0][1], qualified_list[0][1]
+        low_bound, high_bound, var_bound = qualified_list[0][0][0],qualified_list[0][0][1],qualified_list[0][1]
         random_state = check_random_state(self.random_state)
 
         # Check arrays
@@ -496,7 +525,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
         # For point-mutation to find a compatible replacement node
         self._arities = {}
-        for function in self._function_set:  # 以函数集的arity个数对函数集划分
+        for function in self._function_set: # 以函数集的arity个数对函数集划分
             arity = function.arity
             self._arities[arity] = self._arities.get(arity, [])
             self._arities[arity].append(function)
@@ -533,8 +562,8 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                              '"grow", "full" and "half and half". Given %s.'
                              % self.init_method)
 
-        if not ((isinstance(self.const_range, tuple) and
-                 len(self.const_range) == 2) or self.const_range is None):
+        if not((isinstance(self.const_range, tuple) and
+                len(self.const_range) == 2) or self.const_range is None):
             raise ValueError('const_range should be a tuple with length two, '
                              'or None.')
 
@@ -578,13 +607,11 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         params['arities'] = self._arities
         params['method_probs'] = self._method_probs
         const_flag = True
-        if self.const_range == None:
+        if self.const_range ==None:
             const_flag = False
-        selected_space = select_space(
-            cal_spacebound(self.function_set, self.n_features_, var_bound, const_flag=const_flag), low_bound,
-            high_bound)
+        selected_space = select_space(cal_spacebound(self.function_set, self.n_features_,var_bound,const_flag=const_flag),low_bound,high_bound)
         params['selected_space'] = selected_space
-        qualified_list = [qualified_list[-2], qualified_list[-1]]
+        qualified_list = [qualified_list[-2],qualified_list[-1] ]
         params['qualified_list'] = qualified_list
         params['eq_write'] = None
         if not self.warm_start or not hasattr(self, '_programs'):
@@ -758,6 +785,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
 
 class SymbolicRegressor(BaseSymbolic, RegressorMixin):
+
     """A Genetic Programming symbolic regressor.
 
     A symbolic regressor is an estimator that begins by building a population
@@ -1037,6 +1065,7 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
 
 
 class SymbolicClassifier(BaseSymbolic, ClassifierMixin):
+
     """A Genetic Programming symbolic classifier. metric = 'log loss',
 
     A symbolic classifier is an estimator that begins by building a population
@@ -1350,6 +1379,7 @@ class SymbolicClassifier(BaseSymbolic, ClassifierMixin):
 
 
 class SymbolicTransformer(BaseSymbolic, TransformerMixin):
+
     """A Genetic Programming symbolic transformer.
 
     A symbolic transformer is a supervised transformer that begins by building
