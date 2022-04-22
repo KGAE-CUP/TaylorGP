@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 # import timeout_decorator
 import copy
 import itertools
-from getCombinatorics import get_combinatorics, get_combinatorics_byk
+from .getCombinatorics import get_combinatorics, get_combinatorics_byk
 
 CountACC = 0.0
 
@@ -120,25 +120,25 @@ class Metrics:
         self.nihe_flag = False
         self._mid_left, self._mid_right = 0, 0
         self._x_left, self._x_right = 0, 0
-        # try:
-        if varNum == 1:
-            self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var
-            self._X = [self.X0]
-        elif varNum == 2:
-            self.taylor = self._getData_xvar(2)
-        elif varNum == 3:
-            self.taylor = self._getData_xvar(3)
-        elif varNum == 4:
-            self.taylor = self._getData_xvar(4)
-        elif varNum == 5:
-            self.taylor = self._getData_xvar(5)
-        elif varNum == 6:
-            self.taylor = self._getData_xvar(6)
-        else:
+        try:
+            if varNum == 1:
+                self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var
+                self._X = [self.X0]
+            elif varNum == 2:
+                self.taylor = self._getData_xvar(2)
+            elif varNum == 3:
+                self.taylor = self._getData_xvar(3)
+            elif varNum == 4:
+                self.taylor = self._getData_xvar(4)
+            elif varNum == 5:
+                self.taylor = self._getData_xvar(5)
+            elif varNum == 6:
+                self.taylor = self._getData_xvar(6)
+            else:
+                self.taylor = np.array([1] * 10000)
+        except BaseException:#防止程序因矩阵非满秩矩阵而报错停止
+            print('metrix error')
             self.taylor = np.array([1] * 10000)
-        # except BaseException:
-        #     print('metrix error')
-        #     self.taylor = np.array([1] * 10000)
         self.f_taylor = self._getTaylorPolynomial(varNum=varNum)
 
     def _getData_1var(self, k=18, taylorNum=18):
@@ -170,7 +170,6 @@ class Metrics:
 
     # yxGao
     def _getData_xvar(self, n):
-        start = time.time()
         mmm = self.X.shape[0] - 1  #
         X = np.zeros((n, mmm))
         for i in range(n):
@@ -188,8 +187,6 @@ class Metrics:
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
         self.A = A
-        end = time.time()
-        print("time=", end - start)
         if n == 1:
             TaylorNum = 18
         elif n == 2:
@@ -232,7 +229,6 @@ class Metrics:
             f = str(Taylor[0])
             ret = get_combinatorics_byk(varNum, taylorNum, k)
             newRange = min(taylorNum - 1, len(ret))
-            print(newRange)
             for i in range(newRange):
                 if Taylor[i + 1] > 0:
                     f += '+' + str(Taylor[i + 1])
@@ -669,7 +665,6 @@ class Metrics2(Metrics):
             if self.cal_power_expr(f_taylor[i - 1] + f_taylor[i]) <= 4:
                 f_low_taylor += f_taylor[i - 1] + f_taylor[i]
         self.f_low_taylor = sympify(f_low_taylor)
-        print(f_low_taylor)
         y_pred_low = self._calY(self.f_low_taylor, self._x, self._X)
         self.low_nmse = mean_squared_error(self.Y, y_pred_low)
         if self.low_nmse < 1e-5:
