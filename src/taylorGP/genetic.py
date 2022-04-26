@@ -335,9 +335,12 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         sleep(60)
         print("====================================================================")
         print(self.sympy_global_best)
-    def fit(self,X,y,test_X,test_y):
+    def fit(self,X,y):
+        '''
+
         p = Thread(target=self.thread_test)
         p.start()
+        '''
         # np.expand_dims(y,axis=1)
         y = y[:, np.newaxis]
         # y= y.reshape(-1)
@@ -418,8 +421,12 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     else:
                         f += str(lr_est.coef_[0][i]) + '*x' + str(i)
                 print("f_lr and nmse_lr"+f + "  "+str(lr_nmse))
+                '''
                 fitness = mean_squared_error(lr_est.predict(test_X), test_y, squared=False)  # RMSE
-                print('LR_predict_fitness: ', fitness)
+                print('LR_predict_fitness: ', fitness)                
+                '''
+
+
                 metric.f_taylor = sympify(f)
                 metric.f_low_taylor = sympify(f)
             metric.bias = 0.
