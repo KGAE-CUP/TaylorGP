@@ -3,6 +3,7 @@ import time
 from sympy import *
 import numpy as np
 from sklearn.metrics import mean_squared_error
+import scipy.sparse.linalg as scipy_linalg
 # import timeout_decorator
 import copy
 import itertools
@@ -139,7 +140,7 @@ class Metrics:
                 self.taylor = self._getData_xvar(6)
             else:
                 self.taylor = np.array([1] * 10000)
-        except BaseException:#防止程序因矩阵非满秩矩阵而报错停止
+        except BaseException:  # 防止程序因矩阵非满秩矩阵而报错停止
             print('metrix error')
             self.taylor = np.array([1] * 10000)
         self.f_taylor = self._getTaylorPolynomial(varNum=varNum)
@@ -167,7 +168,8 @@ class Metrics:
         for i in range(mmm):
             for j in range(mmm):
                 A[i][j] = ((X[i] - a0) ** (j + 1))
-        Taylor = np.linalg.solve(A, b)
+        # Taylor = np.linalg.solve(A, b)
+        Taylor, iter = scipy_linalg.cg(A, b, tol=1e-5, maxiter=1000)
         Taylor = np.insert(Taylor, 0, f0)  #
         return Taylor.tolist()[:taylorNum], a0, f0, X, Y
 
@@ -186,7 +188,8 @@ class Metrics:
             for j in range(n):
                 A[i][0:] *= X[j][0:] ** combine_number[i][n - 1 - j]
         A = A.transpose()
-        Taylor = np.linalg.solve(A, self.b)
+        # Taylor = np.linalg.solve(A, self.b)
+        Taylor, iter = scipy_linalg.cg(A, self.b, tol=1e-5, maxiter=1000)
         # Taylor_log = np.linalg.solve(A, self.b_log)
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
