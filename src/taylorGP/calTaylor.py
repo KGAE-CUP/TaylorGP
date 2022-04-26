@@ -16,9 +16,12 @@ def Global():
 
 
 x, y, z, v, w, a, b, c, d = symbols("x,y,z,v,w,a,b,c,d")
-x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28, x29 = symbols(
-    "x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20,x21,x22,x23,x24,x25,x26,x27,x28,x29 ")
-
+x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42, \
+x43, x44, x45, x46, x47, x48, x49,x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70, \
+x71, x72, x73, x74, x75, x76, x77, x78, x79,x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 = symbols(
+    "x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
+      x43, x44, x45, x46, x47, x48, x49,x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
+      x71, x72, x73, x74, x75, x76, x77, x78, x79,x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 ")
 
 class Point:
     name = 'Select k+1 Points to calculate Taylor Series'
@@ -170,6 +173,7 @@ class Metrics:
 
     # yxGao
     def _getData_xvar(self, n):
+        start = time.time()
         mmm = self.X.shape[0] - 1  #
         X = np.zeros((n, mmm))
         for i in range(n):
@@ -187,6 +191,8 @@ class Metrics:
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
         self.A = A
+        end = time.time()
+        print("time=", end - start)
         if n == 1:
             TaylorNum = 18
         elif n == 2:
@@ -229,6 +235,7 @@ class Metrics:
             f = str(Taylor[0])
             ret = get_combinatorics_byk(varNum, taylorNum, k)
             newRange = min(taylorNum - 1, len(ret))
+            print(newRange)
             for i in range(newRange):
                 if Taylor[i + 1] > 0:
                     f += '+' + str(Taylor[i + 1])
@@ -292,21 +299,20 @@ class Metrics:
                         self.nmse = test_nmse
                         self.f_taylor = test_f_k
             except BaseException:
+                self.nmse = self.low_nmse
+                self.f_taylor = self.low_nmse
                 print('sympify error')
             try:
                 self.f_taylor_log = self._cal_f_taylor_lowtaylor(k=8, taylor_log_flag=True)
             except BaseException:
                 self.f_taylor_log = 0
                 print('f_taylor_log error')
-            y_pred = self._calY(self.f_taylor)
-            y_low_pred = self._calY(self.f_low_taylor)
-            nmse = mean_squared_error(self.Y, y_pred)
-            low_nmse = mean_squared_error(self.Y, y_low_pred)
-            print('NMSE of Taylor polynomal：', nmse)
-            print('NMSE of Low order Taylor polynomial：', low_nmse)
-
-            self.nmse = nmse
-            self.low_nmse = low_nmse
+            # y_pred = self._calY(self.f_taylor)
+            # y_low_pred = self._calY(self.f_low_taylor)
+            # nmse = mean_squared_error(self.Y, y_pred)
+            # low_nmse = mean_squared_error(self.Y, y_low_pred)
+            print('NMSE of Taylor polynomal：', self.nmse)
+            print('NMSE of Low order Taylor polynomial：', self.low_nmse)
             return self.f_taylor
 
     def _calY(self, f, _x=None, X=None):
@@ -314,7 +320,9 @@ class Metrics:
         len1, len2 = 0, 0
         if _x is None:
             _x = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,
-                  x22, x23, x24, x25, x26, x27, x28, x29]
+                  x22, x23, x24, x25, x26, x27, x28, x29,x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42, x43, x44, x45, x46, x47, x48, x49,
+                  x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70, x71, x72, x73, x74, x75, x76, x77, x78, x79,
+                  x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99,x100 ]
         if X is None:
             X = self._X
             len2 = self.varNum
@@ -665,6 +673,7 @@ class Metrics2(Metrics):
             if self.cal_power_expr(f_taylor[i - 1] + f_taylor[i]) <= 4:
                 f_low_taylor += f_taylor[i - 1] + f_taylor[i]
         self.f_low_taylor = sympify(f_low_taylor)
+        print(f_low_taylor)
         y_pred_low = self._calY(self.f_low_taylor, self._x, self._X)
         self.low_nmse = mean_squared_error(self.Y, y_pred_low)
         if self.low_nmse < 1e-5:
