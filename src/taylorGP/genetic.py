@@ -36,6 +36,8 @@ from .utils import check_random_state
 from .judge_bound import select_space , cal_spacebound
 from ._global import _init,set_value
 from .calTaylor import Metrics,Metrics2
+from .dataExpand import choose_func_und_expand
+
 _init()
 set_value('TUIHUA_FLAG',False)
 
@@ -342,6 +344,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         p.start()
         '''
         # np.expand_dims(y,axis=1)
+
+        # @yxgao expand_data
+        choose_func_und_expand(X, y, 1, 10000)
+
         y = y[:, np.newaxis]
         # y= y.reshape(-1)
         X_Y = np.concatenate((X,y),axis=1)
