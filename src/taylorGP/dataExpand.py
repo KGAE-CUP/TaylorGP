@@ -54,7 +54,9 @@ def expand_data_by_range(X, Y, function, amount_in_need, need_refit=True):
     return new_X, function.predict(new_X)
 
 
-def choose_func_und_expand(X, Y, choosing_rate, amound_in_need):
+def choose_func_und_expand(X, Y, choosing_rate, amount_in_need):
+    if X.shape[0] >= amount_in_need:
+        return X, Y
     kernels = ['linear', 'poly', 'rbf', 'sigmoid']
     kernels_gauss = [C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2)), DotProduct() + WhiteKernel(), None]
     functions = [LinearRegression(), XGBRegressor(), RandomForestRegressor(),  # SVR(),
@@ -66,15 +68,15 @@ def choose_func_und_expand(X, Y, choosing_rate, amound_in_need):
     result = -1
     fitness = float('inf')
     for i in range(len(functions)):
-        choose_amount = int(X.shape[0] * choosing_rate)
+        choose_amount = min(1000, int(X.shape[0] * choosing_rate))
         choose_amount = max(0, choose_amount)
         choose_amount = min(choose_amount, X.shape[0])
-        functions[i].fit(X[0: choose_amount], Y[0:choose_amount])
+        functions[i].fit(X[0: 1000], Y[0:choose_amount])
         cur_fitness = mean_squared_error(functions[i].predict(X), Y, squared=False)
         if cur_fitness < fitness:
             result = i
             fitness = cur_fitness
-    return expand_data_by_range(X, Y, functions[result], amound_in_need, need_refit=False)
+    return expand_data_by_range(X, Y, functions[result], amount_in_need, need_refit=False)
 
 
 if __name__ == '__main__':
@@ -86,6 +88,6 @@ if __name__ == '__main__':
     X, Y = np.split(X_Y, (-1,), axis=1)
     X = np.reshape(X, (10, 2))
     Y = np.reshape(Y, (10, 2))
-    m = 100000
+    m = 5
     newX, newY = choose_func_und_expand(X, Y, 1, m)
     print(newX[m - 1])
