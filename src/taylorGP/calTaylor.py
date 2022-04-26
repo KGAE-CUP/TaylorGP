@@ -189,7 +189,6 @@ class Metrics:
                 A[i][0:] *= X[j][0:] ** combine_number[i][n - 1 - j]
         A = A.transpose()
         # Taylor = np.linalg.solve(A, self.b)
-        # Taylor = np.linalg.solve(A, b)
         Taylor, iter = scipy_linalg.cg(A, self.b, tol=1e-5, maxiter=1000)
         # Taylor_log = np.linalg.solve(A, self.b_log)
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
