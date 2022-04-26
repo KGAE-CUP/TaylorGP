@@ -346,11 +346,12 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         # np.expand_dims(y,axis=1)
 
         # @yxgao expand_data
-        choose_func_und_expand(X, y, 1, 10000)
+        new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
 
         y = y[:, np.newaxis]
+        new_y = new_y[:, np.newaxis]
         # y= y.reshape(-1)
-        X_Y = np.concatenate((X,y),axis=1)
+        X_Y = np.concatenate((new_X, new_y), axis=1)
         print(X_Y.shape)
 
         # X_Y = np.array(X)[1:].astype(np.float)
