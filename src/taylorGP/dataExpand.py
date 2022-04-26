@@ -57,7 +57,7 @@ def expand_data_by_range(X, Y, function, amount_in_need, need_refit=True):
 def choose_func_und_expand(X, Y, choosing_rate, amound_in_need):
     kernels = ['linear', 'poly', 'rbf', 'sigmoid']
     kernels_gauss = [C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2)), DotProduct() + WhiteKernel(), None]
-    functions = [LinearRegression(), XGBRegressor(), RandomForestRegressor(), SVR(),
+    functions = [LinearRegression(), XGBRegressor(), RandomForestRegressor(),  # SVR(),
                  KernelRidge(kernel=kernels[0]), KernelRidge(kernel=kernels[1]),
                  KernelRidge(kernel=kernels[2]), KernelRidge(kernel=kernels[3]),
                  GaussianProcessRegressor(kernel=kernels_gauss[0], n_restarts_optimizer=9),
@@ -87,5 +87,5 @@ if __name__ == '__main__':
     X = np.reshape(X, (10, 2))
     Y = np.reshape(Y, (10, 2))
     m = 100000
-    newX, newY = expand_data_by_range(X, Y, LinearRegression(), m)
+    newX, newY = choose_func_und_expand(X, Y, 1, m)
     print(newX[m - 1])
