@@ -8,11 +8,13 @@ computer programs.
 # Author: Trevor Stephens <trevorstephens.com>
 #
 # License: BSD 3 clause
+from threading import Thread
+
 from sklearn.linear_model import LinearRegression
 from sympy import *
 import itertools
 from abc import ABCMeta, abstractmethod #@abc.abstractmethod装饰器后严格控制子类必须实现这个方法
-from time import time
+from time import time,sleep
 from warnings import warn
 import math
 import numpy as np
@@ -156,7 +158,7 @@ def _parallel_evolve(n_programs, parents, X, y, sample_weight, seeds, params):
         oob_sample_weight[indices] = 0
 
         program.raw_fitness_ = program.raw_fitness(X, y, curr_sample_weight)
-        if math.isnan(program.raw_fitness_) or math.isinf(program.raw_fitness_):
+        if math.isnan(program.raw_fitness_) or math.isinf(program.raw_fitness_) or program.length_ >500:
             i -= 1
             continue
         if max_samples < n_samples:
@@ -232,8 +234,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
-        self.sympy_program =None
-        self.end_fitness = None
+        self.sympy_global_best =None
+        self.global_fitness = None
+        self.best_is_gp = False
+        self._x = []
 
     def _verbose_reporter(self, run_details=None):
         """A report of the progress of the evolution process.
@@ -326,8 +330,17 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             [metric.judge_Bound(), metric.f_low_taylor, metric.low_nmse, metric.bias, metric.judge_parity(),
              metric.judge_monotonicity()])
         return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list,Pop,metric.judge_Low_polynomial())
-
+    def thread_test(self):
+        print("hello")
+        sleep(60)
+        print("====================================================================")
+        print(self.sympy_global_best)
     def fit(self,X,y):
+        '''
+
+        p = Thread(target=self.thread_test)
+        p.start()
+        '''
         # np.expand_dims(y,axis=1)
         y = y[:, np.newaxis]
         # y= y.reshape(-1)
@@ -335,10 +348,25 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         print(X_Y.shape)
 
         # X_Y = np.array(X)[1:].astype(np.float)
-        x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28, x29 = symbols(
-            "x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20,x21,x22,x23,x24,x25,x26,x27,x28,x29 ")
-        _x = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22,
-              x23, x24, x25, x26, x27, x28, x29]
+        x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
+        x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
+        x43, x44, x45, x46, x47, x48, x49,\
+        x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
+        x71, x72, x73, x74, x75, x76, x77, x78, x79,\
+        x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 = symbols(
+            "x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
+              x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
+              x43, x44, x45, x46, x47, x48, x49,\
+              x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
+              x71, x72, x73, x74, x75, x76, x77, x78, x79,\
+              x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 ")
+        _x = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,
+              x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,
+              x43, x44, x45, x46, x47, x48, x49,
+              x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,
+              x71, x72, x73, x74, x75, x76, x77, x78, x79,
+              x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100]
+        self._x = _x
         average_fitness = 0
         repeat = 1
         time_start1 = time()
@@ -357,7 +385,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             metric = Metrics(varNum=X.shape[1], dataSet=np.unique(X_Y, axis=0))
             loopNum += 1
             Metric.append(metric)
-            if metric.nmse >1000:
+            if metric.nmse >10000:
                 print("use Linear regression")
                 break
             if loopNum == 2 and X.shape[1] <= 2:
@@ -393,6 +421,12 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     else:
                         f += str(lr_est.coef_[0][i]) + '*x' + str(i)
                 print("f_lr and nmse_lr"+f + "  "+str(lr_nmse))
+                '''
+                fitness = mean_squared_error(lr_est.predict(test_X), test_y, squared=False)  # RMSE
+                print('LR_predict_fitness: ', fitness)                
+                '''
+
+
                 metric.f_taylor = sympify(f)
                 metric.f_low_taylor = sympify(f)
             metric.bias = 0.
@@ -400,25 +434,27 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 print('Fitting failed')
         time_end2 = time()
         print('Pretreatment_time_cost', (time_end2 - time_start2) / 3600, 'hour')
-        self.end_fitness, self.sympy_program = None, None
+        self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
         if metric.judge_Low_polynomial():
-            self.end_fitness, self.sympy_program = metric.low_nmse, metric.f_low_taylor
+            self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
         elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
-            self.end_fitness,self.sympy_program = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
+            self.global_fitness,self.sympy_global_best = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
         else:
             qualified_list = []
             qualified_list.extend(
-                [metric.judge_Bound(),
+                [metric.judge_Bound(),#ok
                  metric.f_low_taylor,
                  metric.low_nmse,
                  metric.bias,
                  metric.judge_parity(),
                  metric.judge_monotonicity()])
             print(qualified_list)
-            self.end_fitness, self.sympy_program = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
-        self.sympy_program = simplify(self.sympy_program)#simplify could simplify expression that not symbols
-        print('fitness_and_program', self.end_fitness, self.sympy_program, sep=' ')
-        average_fitness += self.end_fitness
+            self._fit(X, metric.change_Y(y), qualified_list)
+            # self.global_fitness, self.sympy_global_best = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
+        # self.sympy_global_best = simplify(self.sympy_global_best)#simplify could simplify expression that not symbols
+        print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
+        print('GP_fitness_and_program', self._program.raw_fitness_, self._program, sep=' ')
+        average_fitness += self.global_fitness
 
 
         time_end1 = time()
@@ -426,20 +462,20 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         print('fitness = ', average_fitness / repeat)
 
         # return program
-    def Taylor_Based_SR( self,_x, X, Y, qualified_list,Pop, low_polynomial):
-        f_low_taylor = qualified_list[-5]
-        f_low_taylor_mse = qualified_list[-4]
-        if low_polynomial == False:
-            print(qualified_list)
-            self.population_size=Pop
-            self._fit(X, Y, qualified_list)
-            if self._program.raw_fitness_ > f_low_taylor_mse:
-                print(f_low_taylor, f_low_taylor_mse, sep='\n')
-                return f_low_taylor_mse, f_low_taylor
-            else:
-                return self._program.raw_fitness_, print_program(self._program.get_expression(), qualified_list, X, _x)
-        else:
-            return f_low_taylor_mse, f_low_taylor
+    # def Taylor_Based_SR( self,_x, X, Y, qualified_list,Pop, low_polynomial):
+        # f_low_taylor = qualified_list[-5]
+        # f_low_taylor_mse = qualified_list[-4]
+        # if low_polynomial == False:
+        #     print(qualified_list)
+        #     self.population_size=Pop
+        #     self._fit(X, Y, qualified_list)
+            # if self._program.raw_fitness_ > f_low_taylor_mse:
+                # print(f_low_taylor, f_low_taylor_mse, sep='\n')
+                # return f_low_taylor_mse, f_low_taylor
+            # else:
+            #     return self._program.raw_fitness_, print_program(self._program, qualified_list, X, _x)
+        # else:
+        #     return f_low_taylor_mse, f_low_taylor
     def _fit(self, X, y,qualified_list,sample_weight=None):
         """Fit the Genetic Program according to X, y.
 
@@ -711,17 +747,17 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             # Record run details
             if self._metric.greater_is_better:
-                best_program = population[np.argmax(fitness)]
+                best_program = population[np.argmax(fitness_)]#按惩罚项的fitness排序
                 best_program_fitness_ = population[np.argmax(fitness_)]
             else:
-                best_program = population[np.argmin(fitness)]
+                best_program = population[np.argmin(fitness_)]
                 best_program_fitness_ = population[np.argmin(fitness_)]
 
             self.run_details_['generation'].append(gen)
             self.run_details_['average_length'].append(np.mean(length))
-            self.run_details_['average_fitness'].append(np.mean(fitness))
+            self.run_details_['average_fitness'].append(np.mean(fitness_))
             self.run_details_['best_length'].append(best_program.length_)
-            self.run_details_['best_fitness'].append(best_program.raw_fitness_)
+            self.run_details_['best_fitness'].append(best_program.fitness_)
             oob_fitness = np.nan
             if self.max_samples < 1.0:
                 oob_fitness = best_program.oob_fitness_
@@ -734,17 +770,17 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             # Check for early stopping
             if self._metric.greater_is_better:
-                best_fitness = fitness[np.argmax(fitness)]
+                best_fitness = fitness[np.argmax(fitness_)]
                 if best_fitness >= self.stopping_criteria:
                     break
             else:
-                best_fitness = fitness[np.argmin(fitness)]
+                best_fitness = fitness[np.argmin(fitness_)]
                 if best_fitness <= self.stopping_criteria:
                     break
 
         if isinstance(self, TransformerMixin):
             # Find the best individuals in the final generation
-            fitness = np.array(fitness)
+            fitness = np.array(fitness_)
             if self._metric.greater_is_better:
                 hall_of_fame = fitness.argsort()[::-1][:self.hall_of_fame]
             else:
@@ -780,6 +816,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 self._program = self._programs[-1][np.argmax(fitness)]
             else:
                 self._program = self._programs[-1][np.argmin(fitness)]
+        if  self._program.raw_fitness_ <self.global_fitness:
+            self.sympy_global_best = sympify(self._program)
+            self.global_fitness = self._program.raw_fitness_
+            self.best_is_gp = True
 
         return self
 
@@ -1032,6 +1072,7 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
         return self._program.__str__()
 
     def predict(self, X):
+
         """Perform regression on test vectors X.
 
         Parameters
@@ -1046,23 +1087,42 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
             Predicted values for X.
 
         """
-        if not hasattr(self, '_program'):
-            print("test before fit!!!")
-            return np.random.rand(X.shape[0])
-            # raise NotFittedError('SymbolicRegressor not fitted.')
+        if self.best_is_gp :
+            if not hasattr(self, '_program'):
+                print("test before fit!!!")
+                return np.random.rand(X.shape[0])
+                # raise NotFittedError('SymbolicRegressor not fitted.')
 
-        X = check_array(X)
-        _, n_features = X.shape
-        if self.n_features_ != n_features:
-            raise ValueError('Number of features of the model must match the '
-                             'input. Model n_features is %s and input '
-                             'n_features is %s.'
-                             % (self.n_features_, n_features))
+            X = check_array(X)
+            _, n_features = X.shape
+            if self.n_features_ != n_features:
+                raise ValueError('Number of features of the model must match the '
+                                 'input. Model n_features is %s and input '
+                                 'n_features is %s.'
+                                 % (self.n_features_, n_features))
 
-        y = self._program.execute(X)
+            y = self._program.execute(X)
+            return y
 
-        return y
-
+        else:
+            _X = []
+            len = X.shape[1]
+            for i in range(len):
+                X, temp = np.split(X, (-1,), axis=1)
+                temp = temp.reshape(-1)
+                _X.extend([temp])
+            _X.reverse()
+            return self._calY(self.sympy_global_best,X=_X)
+    def _calY(self, f, X=None):
+        y_pred = []
+        len2 = len(X)
+        len1 = X[0].shape[0]
+        for i in range(len1):
+            _sub = {}
+            for j in range(len2):
+                _sub.update({self._x[j]: X[j][i]})
+            y_pred.append(f.evalf(subs=_sub))
+        return y_pred
 
 class SymbolicClassifier(BaseSymbolic, ClassifierMixin):
 
