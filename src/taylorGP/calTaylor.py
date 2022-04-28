@@ -633,7 +633,7 @@ class Metrics:
 
 class Metrics2(Metrics):
 
-    def __init__(self, f_taylor, _x, X, Y):
+    def __init__(self, f_taylor, _x, X, Y, Pop, repeatNum):
         self.f_taylor = f_taylor
         self.f_low_taylor = None
         self.x0, self.x1, self.x2, self.x3, self.x4 = symbols("x0,x1,x2,x3,x4")
@@ -646,6 +646,8 @@ class Metrics2(Metrics):
         self.parity_flag = False
         self.di_jian_flag = False
         self.expantionPoint = np.append(copy.deepcopy(X[0]), Y[0][0])
+        self.Pop = Pop
+        self.repeatNum = repeatNum
         self.X = copy.deepcopy(X)
         _X = []
         len = X.shape[1]
@@ -785,6 +787,7 @@ class Metrics2(Metrics):
                 self._cal_add_separability()
                 print('addition separable')
                 return True
+        return False
 
     def judge_multi_separability(self):
         '''multiplicative separability discrimination'''

@@ -284,9 +284,100 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
     def CalTaylorFeatures(self,f_taylor, _x, X, Y, Pop, repeatNum):
         print('In CalTaylorFeatures')
-        metric = Metrics2(f_taylor, _x, X, Y)
+        metric = Metrics2(f_taylor, _x, X, Y, Pop, repeatNum)
         if metric.judge_Low_polynomial():
             return metric.low_nmse, metric.f_low_taylor
+        class mark_info:
+            def __init__ (self, operator):
+                self.operator = operator
+                self.deal_time = 0
+                self.before_node = -1
+
+        mark_stack = [mark_info('m')]
+        matrix_stack = [metric]
+
+        class mark_tree_node:
+
+            def __init__(self, matrix, isMark = False, isLowPoly = False):
+                self.sons= [-1,-1]
+                self.nson = 0
+                if isMark:
+                    self.matrix = None
+                else:
+                    self.matrix = matrix
+                self.isMark = isMark
+                self.isLowPoly = isLowPoly
+
+            def append_son(self, son_id):
+                if self.nson < 2:
+                    self.sons[self.nson] = son_id
+                    self.nson += 1
+                    return True
+                else:
+                    return False
+
+        class mark_tree:
+            def __init__(self):
+                self.info = None
+
+            def append(self, tree_node):
+                if self.info is None:
+                    self.info = [tree_node]
+                else:
+                    self.info.append(tree_node)
+            def length(self):
+                return len(self.info)
+        stack_length = 1
+        final_tree_list = 0
+        tree = mark_tree()
+        while stack_length > 0:
+            top_matrix = matrix_stack.pop()
+            stack_length -= 1
+            is_low_poly = False
+            if top_matrix.judge_Low_polynomial():
+                is_low_poly = True
+
+            elif metric.X.shape[1] > 1:
+                if top_matrix.judge_additi_separability():
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                         metric.Y_right, Pop // 2, repeatNum))
+                    # push left
+                    matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
+                                                         Pop // 2, repeatNum))
+                    mark_stack.append(mark_info('+'))
+                    stack_length += 2
+                    continue
+                elif metric.judge_multi_separability():
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                                metric.Y_right, Pop // 2, repeatNum))
+                    # push left
+                    matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left,
+                                                                metric.Y_left, Pop // 2, repeatNum))
+                    mark_stack.append(mark_info('*'))
+                    stack_length += 2
+                    continue
+            # 不可分 同时不是低多项式
+            tree.append(mark_tree_node(top_matrix, isLowPoly=is_low_poly))
+            if len(mark_stack) > 0 :
+                if mark_stack[-1].deal_time == 0:
+                    mark_stack[-1].deal_time += 1
+                    mark_stack[-1].before_node = tree.length() - 1
+                else:  # top == 1
+                    while mark_stack[-1].deal_time == 1:
+                        top_mark = mark_stack.pop()
+                        new_node = mark_tree_node(top_mark.operator, isMark=True)
+                        new_node.append_son(top_mark.before_node)
+                        new_node.append_son(tree.length())  # current id
+                        tree.append(new_node) # operator node
+                    if len(mark_stack) > 0:
+                        mark_stack[-1].deal_time += 1
+                        mark_stack[-1].before_node = tree.length() - 1
+
+            else:
+                print('error')
+
         if X.shape[1] > 1:
             if metric.judge_additi_separability():
                 print('Separability of addition')
@@ -331,7 +422,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         qualified_list.extend(
             [metric.judge_Bound(), metric.f_low_taylor, metric.low_nmse, metric.bias, metric.judge_parity(),
              metric.judge_monotonicity()])
-        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list,Pop,metric.judge_Low_polynomial())
+        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list, metric.Pop, metric.judge_Low_polynomial())
     def thread_test(self):
         print("hello")
         sleep(60)
