@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from taylorGP.genetic import SymbolicRegressor
+from src.taylorGP.genetic import SymbolicRegressor
 
 from sklearn.metrics import mean_squared_error  # 均方误差
 import pandas as pd
@@ -10,7 +10,7 @@ from time import  time
 import random
 from sklearn.model_selection import train_test_split
 
-# from pmlb import regression_dataset_name
+from pmlb import regression_dataset_names
 
 est = SymbolicRegressor(population_size=1000, init_depth=(2, 5),
                         generations=10000, stopping_criteria=1e-10,
@@ -22,7 +22,7 @@ est = SymbolicRegressor(population_size=1000, init_depth=(2, 5),
                         n_jobs=1,  #
                         const_range=(-1, 1),
                         random_state=random.randint(1, 100), low_memory=True,
-                        max_time = 360-10)
+                        max_time = 360-1)
 
 def model(est, X):
     '''
@@ -50,7 +50,7 @@ def my_pre_train_fn(est, X, y):
     """
 
     if len(X)>1000:
-        est.max_time = 3600 - 10 # 1 second of slack
+        est.max_time = 3600 - 1 # 1 second of slack
     print('TaylorGP max_time adjusted to',est.max_time)
 
 # define eval_kwargs.
