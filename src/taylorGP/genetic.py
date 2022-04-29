@@ -374,9 +374,11 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 qualified_list.extend(
                     [top_matrix.judge_Bound(), top_matrix.f_low_taylor, top_matrix.low_nmse, top_matrix.bias, top_matrix.judge_parity(),
                      top_matrix.judge_monotonicity()])
-
-                new_mat_node.rmse, new_mat_node.formula = self.Taylor_Based_SR(top_matrix._x, top_matrix.X, metric.change_Y(top_matrix.Y), qualified_list, metric.Pop,
-                                            metric.judge_Low_polynomial())
+                self._fit(top_matrix.X, metric.change_Y(top_matrix.Y) ,qualified_list)
+                
+                new_mat_node.rmse, new_mat_node.formula = mean_squared_error(self.predict(top_matrix.X),top_matrix.Y), self.sympy_global_best
+                    #self.Taylor_Based_SR(top_matrix._x, top_matrix.X, metric.change_Y(top_matrix.Y), qualified_list, metric.Pop,
+                    #                       metric.judge_Low_polynomial())
             tree.append(new_mat_node)
             if len(mark_stack) > 0:
                 if mark_stack[-1].deal_time == 0:
