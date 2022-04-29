@@ -283,10 +283,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                                      remaining_time))
 
     def CalTaylorFeatures(self,f_taylor, _x, X, Y, Pop, repeatNum):
-        print('In CalTaylorFeatures')
         metric = Metrics2(f_taylor, _x, X, Y, Pop, repeatNum)
-        if metric.judge_Low_polynomial():
-            return metric.low_nmse, metric.f_low_taylor
         class mark_info:
             def __init__ (self, operator):
                 self.operator = operator
@@ -298,15 +295,20 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
         class mark_tree_node:
 
-            def __init__(self, matrix, isMark = False, isLowPoly = False):
-                self.sons= [-1,-1]
+            def __init__(self, data_in, isMark=False, isLowPoly=False):
+                self.sons = [-1, -1]
                 self.nson = 0
                 if isMark:
                     self.matrix = None
+                    self.operator = data_in
                 else:
-                    self.matrix = matrix
+                    self.matrix = data_in
+                    self.operator = None
+
                 self.isMark = isMark
                 self.isLowPoly = isLowPoly
+                self.rmse = 0
+                self.formula = None
 
             def append_son(self, son_id):
                 if self.nson < 2:
@@ -325,11 +327,13 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     self.info = [tree_node]
                 else:
                     self.info.append(tree_node)
+
             def length(self):
                 return len(self.info)
         stack_length = 1
         final_tree_list = 0
         tree = mark_tree()
+        full_matrix_stack = []
         while stack_length > 0:
             top_matrix = matrix_stack.pop()
             stack_length -= 1
@@ -339,37 +343,64 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             elif metric.X.shape[1] > 1:
                 if top_matrix.judge_additi_separability():
-                    # push right
-                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                         metric.Y_right, Pop // 2, repeatNum))
                     # push left
                     matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
                                                          Pop // 2, repeatNum))
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                         metric.Y_right, Pop // 2, repeatNum))
                     mark_stack.append(mark_info('+'))
+                    full_matrix_stack.append(top_matrix)
                     stack_length += 2
                     continue
                 elif metric.judge_multi_separability():
-                    # push right
-                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                                metric.Y_right, Pop // 2, repeatNum))
                     # push left
                     matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left,
                                                                 metric.Y_left, Pop // 2, repeatNum))
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                                metric.Y_right, Pop // 2, repeatNum))
                     mark_stack.append(mark_info('*'))
+                    full_matrix_stack.append(top_matrix)
                     stack_length += 2
                     continue
             # 不可分 同时不是低多项式
-            tree.append(mark_tree_node(top_matrix, isLowPoly=is_low_poly))
-            if len(mark_stack) > 0 :
+            new_mat_node = mark_tree_node(top_matrix, isLowPoly=is_low_poly)
+            if new_mat_node.isLowPoly:
+                new_mat_node.formula = top_matrix.f_low_taylor
+                new_mat_node.rmse = top_matrix.low_nmse
+            else:
+                qualified_list = []
+                qualified_list.extend(
+                    [top_matrix.judge_Bound(), top_matrix.f_low_taylor, top_matrix.low_nmse, top_matrix.bias, top_matrix.judge_parity(),
+                     top_matrix.judge_monotonicity()])
+
+                new_mat_node.rmse, new_mat_node.formula = self.Taylor_Based_SR(top_matrix._x, top_matrix.X, metric.change_Y(top_matrix.Y), qualified_list, metric.Pop,
+                                            metric.judge_Low_polynomial())
+            tree.append(new_mat_node)
+            if len(mark_stack) > 0:
                 if mark_stack[-1].deal_time == 0:
                     mark_stack[-1].deal_time += 1
                     mark_stack[-1].before_node = tree.length() - 1
                 else:  # top == 1
                     while mark_stack[-1].deal_time == 1:
                         top_mark = mark_stack.pop()
+                        full_mtx = full_matrix_stack.pop()
                         new_node = mark_tree_node(top_mark.operator, isMark=True)
                         new_node.append_son(top_mark.before_node)
                         new_node.append_son(tree.length())  # current id
+                        f_new_fomular = sympify(str(tree.info[new_node.sons[0]].formula) + top_mark.operator + str(tree.info[new_node.sons[1]].formula))
+
+                        try:
+                            y_pred_add = full_mtx._calY(f_new_fomular, _x, full_mtx._X)
+                            rmse = mean_squared_error(full_mtx.Y, y_pred_add)
+                            if rmse < full_mtx.low_nmse:
+                                new_node.rmse, new_node.formula = rmse, f_new_fomular
+                            else:
+                                new_node.rmse, new_node.formula = full_mtx.low_nmse, full_mtx.f_low_taylor
+                        except BaseException:
+                            new_node.rmse, new_node.formula = full_mtx.low_nmse, full_mtx.f_low_taylor
+
                         tree.append(new_node) # operator node
                     if len(mark_stack) > 0:
                         mark_stack[-1].deal_time += 1
@@ -377,52 +408,8 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             else:
                 print('error')
+        return tree.info[-1].rmse, tree.info[-1].formula
 
-        if X.shape[1] > 1:
-            if metric.judge_additi_separability():
-                print('Separability of addition')
-                print('===========================start left recursion============================')
-                low_mse1, f_add1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
-                                                     Pop // 2, repeatNum)
-                print('===========================start right recursion============================')
-                low_mse2, f_add2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                     metric.Y_right, Pop // 2, repeatNum)
-
-                f_add = sympify(str(f_add1) + '+' + str(f_add2))
-                try:
-                    y_pred_add = metric._calY(f_add, _x, metric._X)
-                    nmse = mean_squared_error(Y, y_pred_add)
-                    if nmse < metric.low_nmse:
-                        return nmse, f_add
-                    else:
-                        return metric.low_nmse, metric.f_low_taylor
-                except BaseException:
-                    return metric.low_nmse, metric.f_low_taylor
-            elif metric.judge_multi_separability():
-                print('multiplicative separability')
-                print('===========================start left recursion============================')
-                low_mse1, f_multi1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left,
-                                                       metric.Y_left, Pop // 2, repeatNum)
-                print('===========================start right recursion============================')
-                low_mse2, f_multi2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                       metric.Y_right, Pop // 2, repeatNum)
-
-                f_multi = sympify('(' + str(f_multi1) + ')*(' + str(f_multi2) + ')')
-                try:
-                    y_pred_multi = metric._calY(f_multi, _x, metric._X)
-                    nmse = mean_squared_error(Y, y_pred_multi)
-                    if nmse < metric.low_nmse:
-                        return nmse, f_multi
-                    else:
-                        return metric.low_nmse, metric.f_low_taylor
-                except BaseException:
-                    return metric.low_nmse, metric.f_low_taylor
-
-        qualified_list = []
-        qualified_list.extend(
-            [metric.judge_Bound(), metric.f_low_taylor, metric.low_nmse, metric.bias, metric.judge_parity(),
-             metric.judge_monotonicity()])
-        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list, metric.Pop, metric.judge_Low_polynomial())
     def thread_test(self):
         print("hello")
         sleep(60)
