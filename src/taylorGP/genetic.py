@@ -282,7 +282,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                                      oob_fitness,
                                      remaining_time))
 
-    def CalTaylorFeatures(self,f_taylor, _x, X, Y, Pop, repeatNum):
+    def CalTaylorFeatures(self, f_taylor, _x, X, Y, Pop, repeatNum):
         metric = Metrics2(f_taylor, _x, X, Y, Pop, repeatNum)
         class mark_info:
             def __init__ (self, operator):
@@ -388,7 +388,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                         full_mtx = full_matrix_stack.pop()
                         new_node = mark_tree_node(top_mark.operator, isMark=True)
                         new_node.append_son(top_mark.before_node)
-                        new_node.append_son(tree.length())  # current id
+                        new_node.append_son(tree.length() - 1)  # current id
                         f_new_fomular = sympify(str(tree.info[new_node.sons[0]].formula) + top_mark.operator + str(tree.info[new_node.sons[1]].formula))
 
                         try:
