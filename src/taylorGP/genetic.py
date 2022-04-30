@@ -216,7 +216,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                  n_jobs=1,
                  verbose=0,
                  random_state=None,
-                 max_time = 10):
+                 max_time = 60):
 
         self.population_size = population_size
         self.hall_of_fame = hall_of_fame
@@ -1063,7 +1063,7 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
                  n_jobs=1,
                  verbose=0,
                  random_state=None,
-                 max_time =10):
+                 max_time =60):
         super(SymbolicRegressor, self).__init__(
             population_size=population_size,
             generations=generations,

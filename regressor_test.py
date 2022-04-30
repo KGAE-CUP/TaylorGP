@@ -10,7 +10,7 @@ from time import  time
 import random
 from sklearn.model_selection import train_test_split
 
-from pmlb import regression_dataset_names
+# from pmlb import regression_dataset_name
 
 est = SymbolicRegressor(population_size=1000, init_depth=(2, 5),
                         generations=10000, stopping_criteria=1e-10,
@@ -22,7 +22,7 @@ est = SymbolicRegressor(population_size=1000, init_depth=(2, 5),
                         n_jobs=1,  #
                         const_range=(-1, 1),
                         random_state=random.randint(1, 100), low_memory=True,
-                        max_time = 360-1)
+                        max_time = 3600-10)
 
 def model(est, X):
     '''
@@ -37,20 +37,21 @@ def model(est, X):
     -------
     A sympy-compatible string of the final model.
     '''
-
-    mapping = {'x' + str(i): k for i, k in enumerate(X.columns)}
-    new_model = est.sympy_global_best
-    for k, v in mapping.items():
-        new_model = str(new_model).replace(k, v)
-    return new_model
-
+    try:
+        mapping = {'x' + str(i): k for i, k in enumerate(X.columns)}
+        new_model = est.sympy_global_best
+        for k, v in reversed(mapping.items()):
+            new_model = str(new_model).replace(k, v)
+        return new_model
+    except BaseException:
+        return est.sympy_global_best
 def my_pre_train_fn(est, X, y):
     """In this example we adjust FEAT generations based on the size of X
        versus relative to FEAT's batch size setting.
     """
 
     if len(X)>1000:
-        est.max_time = 3600 - 1 # 1 second of slack
+        est.max_time = 36000 - 10 # 10 second of slack
     print('TaylorGP max_time adjusted to',est.max_time)
 
 # define eval_kwargs.
