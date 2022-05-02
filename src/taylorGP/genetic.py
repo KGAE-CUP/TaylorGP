@@ -366,18 +366,11 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
         try:
             # @yxgao expand_data
-            new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
-
+            # new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
             y = y[:, np.newaxis]
-            new_y = new_y[:, np.newaxis]
             # y= y.reshape(-1)
-            X_Y = np.concatenate((new_X, new_y), axis=1)
+            X_Y = np.concatenate((X,y),axis=1)
             print(X_Y.shape)
-            # np.expand_dims(y,axis=1)
-            # y = y[:, np.newaxis]
-            # y= y.reshape(-1)
-            # X_Y = np.concatenate((X,y),axis=1)
-
             # X_Y = np.array(X)[1:].astype(np.float)
             x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
             x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
