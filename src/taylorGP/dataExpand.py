@@ -59,12 +59,19 @@ def choose_func_und_expand(X, Y, choosing_rate, amount_in_need):
         return X, Y
     kernels = ['linear', 'poly', 'rbf', 'sigmoid']
     kernels_gauss = [C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2)), DotProduct() + WhiteKernel(), None]
-    functions = [LinearRegression(), XGBRegressor(), RandomForestRegressor(),  # SVR(),
-                 KernelRidge(kernel=kernels[0]), KernelRidge(kernel=kernels[1]),
-                 KernelRidge(kernel=kernels[2]), KernelRidge(kernel=kernels[3]),
-                 GaussianProcessRegressor(kernel=kernels_gauss[0], n_restarts_optimizer=9),
-                 GaussianProcessRegressor(kernel=kernels_gauss[1], n_restarts_optimizer=9),
-                 GaussianProcessRegressor(kernel=kernels_gauss[2], n_restarts_optimizer=9)]
+    functions = [
+                 LinearRegression(), 
+                 XGBRegressor(), 
+                 RandomForestRegressor(),  
+                 # SVR(),
+                 KernelRidge(kernel=kernels[0]), 
+                 # KernelRidge(kernel=kernels[1]),
+                 # KernelRidge(kernel=kernels[2]), 
+                 # KernelRidge(kernel=kernels[3]),
+                 GaussianProcessRegressor(kernel=kernels_gauss[0], n_restarts_optimizer=9)
+                 # GaussianProcessRegressor(kernel=kernels_gauss[1], n_restarts_optimizer=9),
+                 # GaussianProcessRegressor(kernel=kernels_gauss[2], n_restarts_optimizer=9)
+                ]
     result = -1
     fitness = float('inf')
     for i in range(len(functions)):
