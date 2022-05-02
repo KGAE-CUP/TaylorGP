@@ -283,7 +283,7 @@ class Metrics:
 
             for k in range(1, count1):
                 test_f_k = self._cal_f_taylor_lowtaylor(k)
-                test_y_pred = self._calY(test_f_k)
+                test_y_pred = np.array(self._calY(test_f_k))
                 test_nmse = mean_squared_error(self.Y, test_y_pred)
                 print('NMSE expanded to order k，k=', k, 'nmse=', test_nmse)
                 if test_nmse < self.low_nmse:
