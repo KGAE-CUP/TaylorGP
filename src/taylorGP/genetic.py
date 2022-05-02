@@ -302,7 +302,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 self.deal_time = 0
                 self.before_node = -1
 
-        mark_stack = [mark_info('m')]
+        mark_stack = []
         matrix_stack = [metric]
 
         class mark_tree_node:
@@ -395,7 +395,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     mark_stack[-1].deal_time += 1
                     mark_stack[-1].before_node = tree.length() - 1
                 else:  # top == 1
-                    while mark_stack[-1].deal_time == 1:
+                    while len(mark_stack) > 0 and mark_stack[-1].deal_time == 1:
                         top_mark = mark_stack.pop()
                         full_mtx = full_matrix_stack.pop()
                         new_node = mark_tree_node(top_mark.operator, isMark=True)
