@@ -9,7 +9,6 @@ computer programs.
 #
 # License: BSD 3 clause
 from threading import Thread
-
 from sklearn.linear_model import LinearRegression
 from sympy import *
 import itertools
@@ -27,6 +26,7 @@ from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import mean_squared_error  # 均方误差
+import signal
 
 from ._program import _Program,print_program
 from .fitness import _fitness_map, _Fitness
@@ -36,12 +36,22 @@ from .utils import check_random_state
 from .judge_bound import select_space , cal_spacebound
 from ._global import _init,set_value
 from .calTaylor import Metrics,Metrics2
+
 from .dataExpand import choose_func_und_expand
+
+class TimeOutException(Exception):
+    pass
+# model evaluation:
+
+def alarm_handler(signum, frame):
+    print(f"raising TimeOutException")
+    raise TimeOutException
 
 _init()
 set_value('TUIHUA_FLAG',False)
 
 __all__ = ['SymbolicRegressor', 'SymbolicClassifier', 'SymbolicTransformer']
+
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -208,7 +218,8 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                  low_memory=True,
                  n_jobs=1,
                  verbose=0,
-                 random_state=None):
+                 random_state=None,
+                 max_time = 60):
 
         self.population_size = population_size
         self.hall_of_fame = hall_of_fame
@@ -237,9 +248,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         self.verbose = verbose
         self.random_state = random_state
         self.sympy_global_best =None
-        self.global_fitness = None
+        self.global_fitness = 1000000
         self.best_is_gp = False
         self._x = []
+        self.max_time = max_time
 
     def _verbose_reporter(self, run_details=None):
         """A report of the progress of the evolution process.
@@ -290,7 +302,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 self.deal_time = 0
                 self.before_node = -1
 
-        mark_stack = [mark_info('m')]
+        mark_stack = []
         matrix_stack = [metric]
 
         class mark_tree_node:
@@ -385,7 +397,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     mark_stack[-1].deal_time += 1
                     mark_stack[-1].before_node = tree.length() - 1
                 else:  # top == 1
-                    while mark_stack[-1].deal_time == 1:
+                    while len(mark_stack) > 0 and mark_stack[-1].deal_time == 1:
                         top_mark = mark_stack.pop()
                         full_mtx = full_matrix_stack.pop()
                         new_node = mark_tree_node(top_mark.operator, isMark=True)
@@ -417,7 +429,12 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         sleep(60)
         print("====================================================================")
         print(self.sympy_global_best)
+
     def fit(self,X,y):
+        # alarm that sends SIGALRM
+        signal.signal(signal.SIGALRM, alarm_handler)
+        # signal.alarm(MAXTIME)
+        signal.alarm(self.max_time)  # maximum time, defined above
         '''
 
         p = Thread(target=self.thread_test)
@@ -425,128 +442,132 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         '''
         # np.expand_dims(y,axis=1)
 
-        # @yxgao expand_data
-        new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
+        
 
-        y = y[:, np.newaxis]
-        new_y = new_y[:, np.newaxis]
-        # y= y.reshape(-1)
-        X_Y = np.concatenate((new_X, new_y), axis=1)
-        print(X_Y.shape)
-
-        # X_Y = np.array(X)[1:].astype(np.float)
-        x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
-        x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
-        x43, x44, x45, x46, x47, x48, x49,\
-        x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
-        x71, x72, x73, x74, x75, x76, x77, x78, x79,\
-        x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 = symbols(
-            "x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
-              x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
-              x43, x44, x45, x46, x47, x48, x49,\
-              x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
-              x71, x72, x73, x74, x75, x76, x77, x78, x79,\
-              x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 ")
-        _x = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,
-              x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,
-              x43, x44, x45, x46, x47, x48, x49,
-              x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,
-              x71, x72, x73, x74, x75, x76, x77, x78, x79,
-              x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100]
-        self._x = _x
-        average_fitness = 0
-        repeat = 1
-        time_start1 = time()
-        time_start2 = time()
-        loopNum = 0
-        Metric = []
-        while True:
+        try:
+            # @yxgao expand_data
+            # new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
+            y = y[:, np.newaxis]
+            # y= y.reshape(-1)
+            X_Y = np.concatenate((X,y),axis=1)
             print(X_Y.shape)
-            '''
-            for i in range(X_Y.shape[0]):
-                for j in range(i + 1, X_Y.shape[0]):
-                    if ((X_Y[i] == X_Y[j]).all()):
-                        print("data is same in :" + str(i) + " " + str(j))            
-            '''
-            #使用去重后的数据计算Taylor展开式
-            metric = Metrics(varNum=X.shape[1], dataSet=np.unique(X_Y, axis=0))
-            loopNum += 1
-            Metric.append(metric)
-            if metric.nmse >10000:
-                print("use Linear regression")
-                break
-            if loopNum == 2 and X.shape[1] <= 2:
-                break
-            elif loopNum == 5 and (X.shape[1] > 2 and X.shape[1] <= 3):
-                break
-            elif loopNum == 4 and (X.shape[1] > 3 and X.shape[1] <= 4):
-                break
-            elif loopNum == 3 and (X.shape[1] > 4 and X.shape[1] <= 5):
-                break
-            elif loopNum == 2 and (X.shape[1] > 5 and X.shape[1] <= 6):
-                break
-            elif loopNum == 1 and (X.shape[1] > 6):
-                break
-        Metric.sort(key=lambda x: x.nmse)
-        metric = Metric[0]
-        print('NMSE of polynomial and lower order polynomial after sorting:', metric.nmse, metric.low_nmse)
-        if metric.nmse < 0.1:
-            metric.nihe_flag = True
-        else:
-            print("call  Linear regression to change nmse and f_taylor")
-            lr_est = LinearRegression().fit(X, y)
-            print('coef: ', lr_est.coef_)
-            print('intercept: ', lr_est.intercept_)
-            lr_nmse = mean_squared_error(lr_est.predict(X),y,squared=False)
-            if lr_nmse < metric.nmse:
-                metric.nmse = lr_nmse
-                metric.low_nmse = lr_nmse
-                f = str(lr_est.intercept_[0])
-                for i in range(X.shape[1]):
-                    if lr_est.coef_[0][i] >= 0:
-                        f += '+' + str(lr_est.coef_[0][i]) + '*x' + str(i)
-                    else:
-                        f += str(lr_est.coef_[0][i]) + '*x' + str(i)
-                print("f_lr and nmse_lr"+f + "  "+str(lr_nmse))
+            # X_Y = np.array(X)[1:].astype(np.float)
+            x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
+            x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
+            x43, x44, x45, x46, x47, x48, x49,\
+            x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
+            x71, x72, x73, x74, x75, x76, x77, x78, x79,\
+            x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 = symbols(
+                "x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
+                  x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
+                  x43, x44, x45, x46, x47, x48, x49,\
+                  x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,\
+                  x71, x72, x73, x74, x75, x76, x77, x78, x79,\
+                  x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100 ")
+            _x = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,
+                  x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,
+                  x43, x44, x45, x46, x47, x48, x49,
+                  x50, x51, x52, x53, x54, x55, x56, x57, x58, x59, x60, x61, x62, x63, x64, x65, x66, x67, x68, x69, x70,
+                  x71, x72, x73, x74, x75, x76, x77, x78, x79,
+                  x80, x81, x82, x83, x84, x85, x86, x87, x88, x89, x90, x91, x92, x93, x94, x95, x96, x97, x98, x99, x100]
+            self._x = _x
+            average_fitness = 0
+            repeat = 1
+            time_start1 = time()
+            time_start2 = time()
+            loopNum = 0
+            Metric = []
+            while True:
+                print(X_Y.shape)
                 '''
-                fitness = mean_squared_error(lr_est.predict(test_X), test_y, squared=False)  # RMSE
-                print('LR_predict_fitness: ', fitness)                
+                for i in range(X_Y.shape[0]):
+                    for j in range(i + 1, X_Y.shape[0]):
+                        if ((X_Y[i] == X_Y[j]).all()):
+                            print("data is same in :" + str(i) + " " + str(j))            
                 '''
+                #使用去重后的数据计算Taylor展开式
+                metric = Metrics(varNum=X.shape[1], dataSet=np.unique(X_Y, axis=0))
+                loopNum += 1
+                Metric.append(metric)
+                if metric.nmse >10000:
+                    print("use Linear regression")
+                    break
+                if loopNum == 2 and X.shape[1] <= 2:
+                    break
+                elif loopNum == 5 and (X.shape[1] > 2 and X.shape[1] <= 3):
+                    break
+                elif loopNum == 4 and (X.shape[1] > 3 and X.shape[1] <= 4):
+                    break
+                elif loopNum == 3 and (X.shape[1] > 4 and X.shape[1] <= 5):
+                    break
+                elif loopNum == 2 and (X.shape[1] > 5 and X.shape[1] <= 6):
+                    break
+                elif loopNum == 1 and (X.shape[1] > 6):
+                    break
+            Metric.sort(key=lambda x: x.nmse)
+            metric = Metric[0]
+            print('NMSE of polynomial and lower order polynomial after sorting:', metric.nmse, metric.low_nmse)
+            if metric.nmse < 0.1:
+                metric.nihe_flag = True
+            else:
+                print("call  Linear regression to change nmse and f_taylor")
+                lr_est = LinearRegression().fit(X, y)
+                print('coef: ', lr_est.coef_)
+                print('intercept: ', lr_est.intercept_)
+                lr_nmse = mean_squared_error(lr_est.predict(X),y,squared=False)
+                if lr_nmse < metric.nmse:
+                    metric.nmse = lr_nmse
+                    metric.low_nmse = lr_nmse
+                    f = str(lr_est.intercept_[0])
+                    for i in range(X.shape[1]):
+                        if lr_est.coef_[0][i] >= 0:
+                            f += '+' + str(lr_est.coef_[0][i]) + '*x' + str(i)
+                        else:
+                            f += str(lr_est.coef_[0][i]) + '*x' + str(i)
+                    print("f_lr and nmse_lr"+f + "  "+str(lr_nmse))
+                    '''
+                    fitness = mean_squared_error(lr_est.predict(test_X), test_y, squared=False)  # RMSE
+                    print('LR_predict_fitness: ', fitness)                
+                    '''
 
 
-                metric.f_taylor = sympify(f)
-                metric.f_low_taylor = sympify(f)
-            metric.bias = 0.
-            if lr_nmse < 0.1:
-                print('Fitting failed')
-        time_end2 = time()
-        print('Pretreatment_time_cost', (time_end2 - time_start2) / 3600, 'hour')
-        self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
-        if metric.judge_Low_polynomial():
+                    metric.f_taylor = sympify(f)
+                    metric.f_low_taylor = sympify(f)
+                metric.bias = 0.
+                if lr_nmse < 0.1:
+                    print('Fitting failed')
+            time_end2 = time()
+            print('Pretreatment_time_cost', (time_end2 - time_start2) / 3600, 'hour')
             self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
-        elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
-            self.global_fitness,self.sympy_global_best = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
-        else:
-            qualified_list = []
-            qualified_list.extend(
-                [metric.judge_Bound(),#ok
-                 metric.f_low_taylor,
-                 metric.low_nmse,
-                 metric.bias,
-                 metric.judge_parity(),
-                 metric.judge_monotonicity()])
-            print(qualified_list)
-            self._fit(X, metric.change_Y(y), qualified_list)
-            # self.global_fitness, self.sympy_global_best = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
-        # self.sympy_global_best = simplify(self.sympy_global_best)#simplify could simplify expression that not symbols
-        print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
-        print('GP_fitness_and_program', self._program.raw_fitness_, self._program, sep=' ')
-        average_fitness += self.global_fitness
+            if metric.judge_Low_polynomial():
+                self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
+            elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
+                self.global_fitness,self.sympy_global_best = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
+            else:
+                qualified_list = []
+                qualified_list.extend(
+                    [metric.judge_Bound(),#ok
+                     metric.f_low_taylor,
+                     metric.low_nmse,
+                     metric.bias,
+                     metric.judge_parity(),
+                     metric.judge_monotonicity()])
+                print(qualified_list)
+                self._fit(X, metric.change_Y(y), qualified_list)
+                # self.global_fitness, self.sympy_global_best = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
+            # self.sympy_global_best = simplify(self.sympy_global_best)#simplify could simplify expression that not symbols
+            print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
+            print('GP_fitness_and_program', self._program.raw_fitness_, self._program, sep=' ')
+            average_fitness += self.global_fitness
 
 
-        time_end1 = time()
-        print('overall_time_cost', (time_end1 - time_start1) / 3600 / repeat, 'hour')
-        print('fitness = ', average_fitness / repeat)
+            time_end1 = time()
+            print('overall_time_cost', (time_end1 - time_start1) / 3600 / repeat, 'hour')
+            print('fitness = ', average_fitness / repeat)
+        except TimeOutException :
+            print("TimeOutException catched in fit()")
+            return self
+        return self
 
         # return program
     # def Taylor_Based_SR( self,_x, X, Y, qualified_list,Pop, low_polynomial):
@@ -1127,7 +1148,8 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
                  low_memory=True,
                  n_jobs=1,
                  verbose=0,
-                 random_state=None):
+                 random_state=None,
+                 max_time =60):
         super(SymbolicRegressor, self).__init__(
             population_size=population_size,
             generations=generations,
@@ -1150,7 +1172,8 @@ class SymbolicRegressor(BaseSymbolic, RegressorMixin):
             low_memory=low_memory,
             n_jobs=n_jobs,
             verbose=verbose,
-            random_state=random_state)
+            random_state=random_state,
+            max_time = max_time)
 
     def __str__(self):
         """Overloads `print` output of the object to resemble a LISP tree."""
