@@ -3,6 +3,7 @@ import time
 from sympy import *
 import numpy as np
 from sklearn.metrics import mean_squared_error
+import scipy.sparse.linalg as scipy_linalg
 # import timeout_decorator
 import copy
 import itertools
@@ -139,7 +140,7 @@ class Metrics:
                 self.taylor = self._getData_xvar(6)
             else:
                 self.taylor = np.array([1] * 10000)
-        except BaseException:#防止程序因矩阵非满秩矩阵而报错停止
+        except BaseException:  # 防止程序因矩阵非满秩矩阵而报错停止
             print('metrix error')
             self.taylor = np.array([1] * 10000)
         self.f_taylor = self._getTaylorPolynomial(varNum=varNum)
@@ -167,7 +168,10 @@ class Metrics:
         for i in range(mmm):
             for j in range(mmm):
                 A[i][j] = ((X[i] - a0) ** (j + 1))
-        Taylor = np.linalg.solve(A, b)
+        try:
+            Taylor = np.linalg.solve(A, b)
+        except BaseException:
+            Taylor, iter = scipy_linalg.cg(A, b, tol=1e-5, maxiter=1000)
         Taylor = np.insert(Taylor, 0, f0)  #
         return Taylor.tolist()[:taylorNum], a0, f0, X, Y
 
@@ -186,7 +190,10 @@ class Metrics:
             for j in range(n):
                 A[i][0:] *= X[j][0:] ** combine_number[i][n - 1 - j]
         A = A.transpose()
-        Taylor = np.linalg.solve(A, self.b)
+        try:
+            Taylor = np.linalg.solve(A, self.b)
+        except BaseException:
+            Taylor, iter = scipy_linalg.cg(A, self.b, tol=1e-5, maxiter=1000)
         # Taylor_log = np.linalg.solve(A, self.b_log)
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]
@@ -630,7 +637,7 @@ class Metrics:
 
 class Metrics2(Metrics):
 
-    def __init__(self, f_taylor, _x, X, Y):
+    def __init__(self, f_taylor, _x, X, Y, Pop, repeatNum):
         self.f_taylor = f_taylor
         self.f_low_taylor = None
         self.x0, self.x1, self.x2, self.x3, self.x4 = symbols("x0,x1,x2,x3,x4")
@@ -643,6 +650,8 @@ class Metrics2(Metrics):
         self.parity_flag = False
         self.di_jian_flag = False
         self.expantionPoint = np.append(copy.deepcopy(X[0]), Y[0][0])
+        self.Pop = Pop
+        self.repeatNum = repeatNum
         self.X = copy.deepcopy(X)
         _X = []
         len = X.shape[1]
@@ -782,6 +791,7 @@ class Metrics2(Metrics):
                 self._cal_add_separability()
                 print('addition separable')
                 return True
+        return False
 
     def judge_multi_separability(self):
         '''multiplicative separability discrimination'''

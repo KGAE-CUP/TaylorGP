@@ -36,6 +36,9 @@ from .utils import check_random_state
 from .judge_bound import select_space , cal_spacebound
 from ._global import _init,set_value
 from .calTaylor import Metrics,Metrics2
+
+from .dataExpand import choose_func_und_expand
+
 class TimeOutException(Exception):
     pass
 # model evaluation:
@@ -291,56 +294,136 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                                      oob_fitness,
                                      remaining_time))
 
-    def CalTaylorFeatures(self,f_taylor, _x, X, Y, Pop, repeatNum):
-        print('In CalTaylorFeatures')
-        metric = Metrics2(f_taylor, _x, X, Y)
-        if metric.judge_Low_polynomial():
-            return metric.low_nmse, metric.f_low_taylor
-        if X.shape[1] > 1:
-            if metric.judge_additi_separability():
-                print('Separability of addition')
-                print('===========================start left recursion============================')
-                low_mse1, f_add1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
-                                                     Pop // 2, repeatNum)
-                print('===========================start right recursion============================')
-                low_mse2, f_add2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                     metric.Y_right, Pop // 2, repeatNum)
+    def CalTaylorFeatures(self, f_taylor, _x, X, Y, Pop, repeatNum):
+        metric = Metrics2(f_taylor, _x, X, Y, Pop, repeatNum)
+        class mark_info:
+            def __init__ (self, operator):
+                self.operator = operator
+                self.deal_time = 0
+                self.before_node = -1
 
-                f_add = sympify(str(f_add1) + '+' + str(f_add2))
-                try:
-                    y_pred_add = metric._calY(f_add, _x, metric._X)
-                    nmse = mean_squared_error(Y, y_pred_add)
-                    if nmse < metric.low_nmse:
-                        return nmse, f_add
-                    else:
-                        return metric.low_nmse, metric.f_low_taylor
-                except BaseException:
-                    return metric.low_nmse, metric.f_low_taylor
-            elif metric.judge_multi_separability():
-                print('multiplicative separability')
-                print('===========================start left recursion============================')
-                low_mse1, f_multi1 = self.CalTaylorFeatures(metric.f_left_taylor, metric._x_left, metric.X_left,
-                                                       metric.Y_left, Pop // 2, repeatNum)
-                print('===========================start right recursion============================')
-                low_mse2, f_multi2 = self.CalTaylorFeatures(metric.f_right_taylor, metric._x_right, metric.X_right,
-                                                       metric.Y_right, Pop // 2, repeatNum)
+        mark_stack = []
+        matrix_stack = [metric]
 
-                f_multi = sympify('(' + str(f_multi1) + ')*(' + str(f_multi2) + ')')
-                try:
-                    y_pred_multi = metric._calY(f_multi, _x, metric._X)
-                    nmse = mean_squared_error(Y, y_pred_multi)
-                    if nmse < metric.low_nmse:
-                        return nmse, f_multi
-                    else:
-                        return metric.low_nmse, metric.f_low_taylor
-                except BaseException:
-                    return metric.low_nmse, metric.f_low_taylor
+        class mark_tree_node:
 
-        qualified_list = []
-        qualified_list.extend(
-            [metric.judge_Bound(), metric.f_low_taylor, metric.low_nmse, metric.bias, metric.judge_parity(),
-             metric.judge_monotonicity()])
-        return self.Taylor_Based_SR(_x, X, metric.change_Y(Y), qualified_list,Pop,metric.judge_Low_polynomial())
+            def __init__(self, data_in, isMark=False, isLowPoly=False):
+                self.sons = [-1, -1]
+                self.nson = 0
+                if isMark:
+                    self.matrix = None
+                    self.operator = data_in
+                else:
+                    self.matrix = data_in
+                    self.operator = None
+
+                self.isMark = isMark
+                self.isLowPoly = isLowPoly
+                self.rmse = 0
+                self.formula = None
+
+            def append_son(self, son_id):
+                if self.nson < 2:
+                    self.sons[self.nson] = son_id
+                    self.nson += 1
+                    return True
+                else:
+                    return False
+
+        class mark_tree:
+            def __init__(self):
+                self.info = None
+
+            def append(self, tree_node):
+                if self.info is None:
+                    self.info = [tree_node]
+                else:
+                    self.info.append(tree_node)
+
+            def length(self):
+                return len(self.info)
+        stack_length = 1
+        final_tree_list = 0
+        tree = mark_tree()
+        full_matrix_stack = []
+        while stack_length > 0:
+            top_matrix = matrix_stack.pop()
+            stack_length -= 1
+            is_low_poly = False
+            if top_matrix.judge_Low_polynomial():
+                is_low_poly = True
+
+            elif top_matrix.X.shape[1] > 1:
+                if top_matrix.judge_additi_separability():
+                    # push left
+                    matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
+                                                         Pop // 2, repeatNum))
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                         metric.Y_right, Pop // 2, repeatNum))
+                    mark_stack.append(mark_info('+'))
+                    full_matrix_stack.append(top_matrix)
+                    stack_length += 2
+                    continue
+                elif metric.judge_multi_separability():
+                    # push left
+                    matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left,
+                                                                metric.Y_left, Pop // 2, repeatNum))
+                    # push right
+                    matrix_stack.append(Metrics2(metric.f_right_taylor, metric._x_right, metric.X_right,
+                                                                metric.Y_right, Pop // 2, repeatNum))
+                    mark_stack.append(mark_info('*'))
+                    full_matrix_stack.append(top_matrix)
+                    stack_length += 2
+                    continue
+            # 不可分 同时不是低多项式
+            new_mat_node = mark_tree_node(top_matrix, isLowPoly=is_low_poly)
+            if new_mat_node.isLowPoly:
+                new_mat_node.formula = top_matrix.f_low_taylor
+                new_mat_node.rmse = top_matrix.low_nmse
+            else:
+                qualified_list = []
+                qualified_list.extend(
+                    [top_matrix.judge_Bound(), top_matrix.f_low_taylor, top_matrix.low_nmse, top_matrix.bias, top_matrix.judge_parity(),
+                     top_matrix.judge_monotonicity()])
+                self._fit(top_matrix.X, metric.change_Y(top_matrix.Y) ,qualified_list)
+                new_rmse = mean_squared_error(self.predict(top_matrix.X),top_matrix.Y)
+                new_mat_node.rmse, new_mat_node.formula = new_rmse , self.sympy_global_best
+                    #self.Taylor_Based_SR(top_matrix._x, top_matrix.X, metric.change_Y(top_matrix.Y), qualified_list, metric.Pop,
+                    #                       metric.judge_Low_polynomial())
+            tree.append(new_mat_node)
+            if len(mark_stack) > 0:
+                if mark_stack[-1].deal_time == 0:
+                    mark_stack[-1].deal_time += 1
+                    mark_stack[-1].before_node = tree.length() - 1
+                else:  # top == 1
+                    while len(mark_stack) > 0 and mark_stack[-1].deal_time == 1:
+                        top_mark = mark_stack.pop()
+                        full_mtx = full_matrix_stack.pop()
+                        new_node = mark_tree_node(top_mark.operator, isMark=True)
+                        new_node.append_son(top_mark.before_node)
+                        new_node.append_son(tree.length() - 1)  # current id
+                        f_new_fomular = sympify(str(tree.info[new_node.sons[0]].formula) + top_mark.operator + str(tree.info[new_node.sons[1]].formula))
+
+                        try:
+                            y_pred_add = full_mtx._calY(f_new_fomular, _x, full_mtx._X)
+                            rmse = mean_squared_error(full_mtx.Y, y_pred_add)
+                            if rmse < full_mtx.low_nmse:
+                                new_node.rmse, new_node.formula = rmse, f_new_fomular
+                            else:
+                                new_node.rmse, new_node.formula = full_mtx.low_nmse, full_mtx.f_low_taylor
+                        except BaseException:
+                            new_node.rmse, new_node.formula = full_mtx.low_nmse, full_mtx.f_low_taylor
+
+                        tree.append(new_node) # operator node
+                    if len(mark_stack) > 0:
+                        mark_stack[-1].deal_time += 1
+                        mark_stack[-1].before_node = tree.length() - 1
+
+            else:
+                print('error')
+        return tree.info[-1].rmse, tree.info[-1].formula
+
     def thread_test(self):
         print("hello")
         sleep(60)
@@ -357,14 +440,17 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         p = Thread(target=self.thread_test)
         p.start()
         '''
+        # np.expand_dims(y,axis=1)
+
+        
 
         try:
-            # np.expand_dims(y,axis=1)
+            # @yxgao expand_data
+            # new_X, new_y = choose_func_und_expand(X, y, 1, 10000)
             y = y[:, np.newaxis]
             # y= y.reshape(-1)
             X_Y = np.concatenate((X,y),axis=1)
             print(X_Y.shape)
-
             # X_Y = np.array(X)[1:].astype(np.float)
             x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21,\
             x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33, x34, x35, x36, x37, x38, x39, x40, x41, x42,\
