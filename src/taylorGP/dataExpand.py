@@ -78,7 +78,7 @@ def choose_func_und_expand(X, Y, choosing_rate, amount_in_need):
         choose_amount = min(1000, int(X.shape[0] * choosing_rate))
         choose_amount = max(0, choose_amount)
         choose_amount = min(choose_amount, X.shape[0])
-        functions[i].fit(X[0: 1000], Y[0:choose_amount])
+        functions[i].fit(X[0: choose_amount], Y[0:choose_amount])
         cur_fitness = mean_squared_error(functions[i].predict(X), Y, squared=False)
         if cur_fitness < fitness:
             result = i
