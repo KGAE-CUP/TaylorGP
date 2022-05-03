@@ -168,8 +168,10 @@ class Metrics:
         for i in range(mmm):
             for j in range(mmm):
                 A[i][j] = ((X[i] - a0) ** (j + 1))
-        # Taylor = np.linalg.solve(A, b)
-        Taylor, iter = scipy_linalg.cg(A, b, tol=1e-5, maxiter=1000)
+        try:
+            Taylor = np.linalg.solve(A, b)
+        except BaseException:
+            Taylor, iter = scipy_linalg.cg(A, b, tol=1e-5, maxiter=1000)
         Taylor = np.insert(Taylor, 0, f0)  #
         return Taylor.tolist()[:taylorNum], a0, f0, X, Y
 
@@ -188,8 +190,10 @@ class Metrics:
             for j in range(n):
                 A[i][0:] *= X[j][0:] ** combine_number[i][n - 1 - j]
         A = A.transpose()
-        # Taylor = np.linalg.solve(A, self.b)
-        Taylor, iter = scipy_linalg.cg(A, self.b, tol=1e-5, maxiter=1000)
+        try:
+            Taylor = np.linalg.solve(A, self.b)
+        except BaseException:
+            Taylor, iter = scipy_linalg.cg(A, self.b, tol=1e-5, maxiter=1000)
         # Taylor_log = np.linalg.solve(A, self.b_log)
         Taylor = np.insert(Taylor, 0, self.expantionPoint[-1])  #
         # self.Taylor_log = np.insert(Taylor_log, 0, self.f0_log)[:]

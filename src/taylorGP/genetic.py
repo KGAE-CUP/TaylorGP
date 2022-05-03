@@ -341,7 +341,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             if top_matrix.judge_Low_polynomial():
                 is_low_poly = True
 
-            elif metric.X.shape[1] > 1:
+            elif top_matrix.X.shape[1] > 1:
                 if top_matrix.judge_additi_separability():
                     # push left
                     matrix_stack.append(Metrics2(metric.f_left_taylor, metric._x_left, metric.X_left, metric.Y_left,
