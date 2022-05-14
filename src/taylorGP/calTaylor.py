@@ -125,7 +125,7 @@ class Metrics:
         self._x_left, self._x_right = 0, 0
         try:
             if varNum == 1:
-                self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var
+                self.taylor, self.expantionPointa0, self.expantionPointf0, self.X0, self.Y = self._getData_1var()
                 self._X = [self.X0]
             elif varNum == 2:
                 self.taylor = self._getData_xvar(2)
@@ -229,9 +229,11 @@ class Metrics:
                     self.bias = float(f_split[-2] + f_split[-1])
                 except BaseException:
                     self.bias = 0.
+            print(f_taylor)
             return f_taylor, sympify(str(f_taylor).split('*x0**7')[-1])
         else:
             taylorNum = len(Taylor)
+            # print("real_taylorNum:",taylorNum)
             f = str(Taylor[0])
             ret = get_combinatorics_byk(varNum, taylorNum, k)
             newRange = min(taylorNum - 1, len(ret))
@@ -247,6 +249,7 @@ class Metrics:
                         f += '*(x' + str(j) + '-' + str(self.expantionPoint[j]) + ')**' + str(ret[i][varNum - 1 - j])
             f_taylor = sympify(f)
             f_taylor = f_taylor.expand()
+            # print("f_taylor: ",f_taylor)
             f_split = str(f_taylor).split()
             if taylor_log_flag == False:
                 try:
@@ -277,10 +280,15 @@ class Metrics:
             elif self.varNum == 3:
                 count1 = 4
                 count2 = 8
-            elif self.varNum in [4, 5, 6]:
+            elif self.varNum == 4:
                 count1 = 3
                 count2 = 7
-
+            elif self.varNum == 5:
+                count1 = 3
+                count2 = 6
+            elif self.varNum == 6:
+                count1 = 3
+                count2 = 5
             for k in range(1, count1):
                 test_f_k = self._cal_f_taylor_lowtaylor(k)
                 test_y_pred = np.array(self._calY(test_f_k))
@@ -289,6 +297,8 @@ class Metrics:
                 if test_nmse < self.low_nmse:
                     self.low_nmse = test_nmse
                     self.f_low_taylor = test_f_k
+            self.nmse = self.low_nmse
+            self.f_taylor = self.f_low_taylor
             try:
                 for k in range(count1, count2):
                     test_f_k = self._cal_f_taylor_lowtaylor(k)
@@ -299,8 +309,7 @@ class Metrics:
                         self.nmse = test_nmse
                         self.f_taylor = test_f_k
             except BaseException:
-                self.nmse = self.low_nmse
-                self.f_taylor = self.low_nmse
+
                 print('sympify error')
             try:
                 self.f_taylor_log = self._cal_f_taylor_lowtaylor(k=8, taylor_log_flag=True)
@@ -469,7 +478,7 @@ class Metrics:
                 odd function：1
                 even function：2
         '''
-
+        print("奇偶性判别")
         if self.nihe_flag:
             if self.bias != 0:
                 f_taylor = str(self.f_taylor).split()[:-2]
@@ -477,6 +486,8 @@ class Metrics:
                 f_taylor = str(self.f_taylor).split()
             Y = self.Y - self.bias
             f_odd, f_even = '', ''
+            print(self.f_taylor)
+            print(f_taylor)
             if self.cal_power_expr(f_taylor[0]) % 2 == 1:
                 f_odd += f_taylor[0]
             else:
@@ -486,6 +497,10 @@ class Metrics:
                     f_odd += f_taylor[i - 1] + f_taylor[i]
                 else:
                     f_even += f_taylor[i - 1] + f_taylor[i]
+            if f_even == '':
+                f_even = '0'
+            elif f_odd == '':
+                f_odd = '0'
             f_odd, f_even = sympify(f_odd), sympify(f_even)
             Jishu, Oushu, nmse_odd, nmse_even = False, False, 0, 0
             y_pred = self._calY(f_odd)

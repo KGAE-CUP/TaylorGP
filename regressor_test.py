@@ -16,9 +16,9 @@ est = SymbolicRegressor(population_size=1000, init_depth=(2, 5),
                         generations=10000, stopping_criteria=1e-10,
                         function_set=['add', 'sub', 'mul', 'div', 'sin', 'cos', 'log', 'exp', 'sqrt'],
                         p_crossover=0.7, p_subtree_mutation=0.,
-                        p_hoist_mutation=0., p_point_mutation=0.2,
+                        p_hoist_mutation=0., p_point_mutation=0.3,
                         max_samples=1.0, verbose=1,
-                        parsimony_coefficient=0.3,
+                        parsimony_coefficient=0.1,
                         n_jobs=1,  #
                         const_range=(-1, 1),
                         random_state=random.randint(1, 100), low_memory=True,
@@ -62,10 +62,25 @@ eval_kwargs = dict(
                                  }
                   )
 if __name__ == '__main__':
+    # dir = "D:\PYcharm_program\pmlb-feynman\pmlb-feynman\datasets"
+    dir = "/home/hebaihe/STORAGE/git_srv/pmlb-feynman/datasets"
+    for root, dirs, files in os.walk(dir):
+        for dirname in dirs:
+            if 'feynman' in dirname:
+                regression_dataset_names.append(dirname)
+    dir = "/home/hebaihe/STORAGE/git_srv/pmlb-strogatz_metadata/datasets"
+    # dir = "D:\PYcharm_program\pmlb-strogatz_metadata\pmlb-strogatz_metadata\datasets"
+    for root, dirs, files in os.walk(dir):
+        for dirname in dirs:
+            if 'strogatz' in dirname:
+                regression_dataset_names.append(dirname)
+    # for fileNo,regression_dataset in enumerate(regression_dataset_names):
+    #     print(fileNo,regression_dataset)
+    # exit()
     print("hello")
     sys.setrecursionlimit(300)
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--PMLBNum', default=0, type=int)
+    argparser.add_argument('--PMLBNum', default=7, type=int)
     args = argparser.parse_args()
     '''
     adult_X, adult_y = fetch_data('adult', return_X_y=True, local_cache_dir='./')
@@ -78,9 +93,10 @@ if __name__ == '__main__':
     '''
     print("="*100)
 
-    eqName = 'time_p2_'+ str(args.PMLBNum)+'.csv'
+    eqName = 'time_NSGA_'+ str(args.PMLBNum)+'.csv'
     eq_write = open(eqName, "w+")  # 重新写
-    for fileNo,regression_dataset in enumerate(regression_dataset_names[args.PMLBNum*10:args.PMLBNum*10+10]):
+    #for fileNo,regression_dataset in enumerate(["feynman_I_48_2"]):
+    for fileNo, regression_dataset in enumerate(regression_dataset_names[args.PMLBNum * 20:args.PMLBNum * 20 + 20]):
         print(regression_dataset)
         # X, y = fetch_data(regression_dataset, return_X_y=True,local_cache_dir='D:\PYcharm_program\pmlb\datasets')
         # local_cache_dir = "D:\PYcharm_program\pmlb\datasets"
@@ -118,6 +134,7 @@ if __name__ == '__main__':
                             +'  train cost '+str(runTime) + ' minutes  '
                             +'  train_fitness: '+str(est.global_fitness)+'  predict_fitness: '+str(fitness)
                             +'  best_program: '+str(est.sympy_global_best)+'\n')
+        print("over!!!!!")
     eq_write.close()
 
         # except BaseException:

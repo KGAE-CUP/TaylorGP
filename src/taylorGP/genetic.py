@@ -8,6 +8,7 @@ computer programs.
 # Author: Trevor Stephens <trevorstephens.com>
 #
 # License: BSD 3 clause
+import copy
 from threading import Thread
 from sklearn.linear_model import LinearRegression
 from sympy import *
@@ -406,7 +407,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 if metric.nmse >10000:
                     print("use Linear regression")
                     break
-                if loopNum == 2 and X.shape[1] <= 2:
+                if loopNum == 6 and X.shape[1] <= 2:
                     break
                 elif loopNum == 5 and (X.shape[1] > 2 and X.shape[1] <= 3):
                     break
@@ -421,7 +422,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             Metric.sort(key=lambda x: x.nmse)
             metric = Metric[0]
             print('NMSE of polynomial and lower order polynomial after sorting:', metric.nmse, metric.low_nmse)
-            if metric.nmse < 0.1:
+            if metric.nmse < 0.01:
                 metric.nihe_flag = True
             else:
                 print("call  Linear regression to change nmse and f_taylor")
@@ -443,8 +444,6 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                     fitness = mean_squared_error(lr_est.predict(test_X), test_y, squared=False)  # RMSE
                     print('LR_predict_fitness: ', fitness)                
                     '''
-
-
                     metric.f_taylor = sympify(f)
                     metric.f_low_taylor = sympify(f)
                 metric.bias = 0.
@@ -455,8 +454,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
             if metric.judge_Low_polynomial():
                 self.global_fitness, self.sympy_global_best = metric.low_nmse, metric.f_low_taylor
-            elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
-                self.global_fitness,self.sympy_global_best = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
+                '''
+                elif metric.nihe_flag and (metric.judge_additi_separability() or metric.judge_multi_separability() ):
+                    self.global_fitness,self.sympy_global_best = self.CalTaylorFeatures(metric.f_taylor,_x[:X.shape[1]],X,y,self.population_size,11111)
+                '''
             else:
                 qualified_list = []
                 qualified_list.extend(
@@ -470,8 +471,11 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
                 self._fit(X, metric.change_Y(y), qualified_list)
                 # self.global_fitness, self.sympy_global_best = self.Taylor_Based_SR( _x, X, metric.change_Y(y), qualified_list,self.population_size,metric.low_nmse < 1e-5)
             # self.sympy_global_best = simplify(self.sympy_global_best)#simplify could simplify expression that not symbols
-            print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
-            print('GP_fitness_and_program', self._program.raw_fitness_, self._program, sep=' ')
+            try:
+                print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
+                print('GP_fitness_and_program', self._program.raw_fitness_, self._program, sep=' ')
+            except BaseException:
+                print("Bingo!")
             average_fitness += self.global_fitness
 
 
@@ -480,6 +484,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             print('fitness = ', average_fitness / repeat)
         except TimeOutException :
             print("TimeOutException catched in fit()")
+            print('global_fitness_and_program', self.global_fitness, self.sympy_global_best, sep=' ')
             return self
         return self
 
@@ -498,6 +503,100 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             #     return self._program.raw_fitness_, print_program(self._program, qualified_list, X, _x)
         # else:
         #     return f_low_taylor_mse, f_low_taylor
+
+    '''
+    Function to carry out NSGA-II's fast non dominated sort
+    多目标：values1 values2
+    Population Size：p == len(population)
+    支配个体p的个数：n[p]
+    个体p支配的个体集：S[p]
+    p的帕累托等级：rank[p]
+    帕累托等级个体排名集合：front[population[p]]
+    我的目的只是为了保留排名前n个体，所以只保留前n个 个体索引即可--不需要前沿front
+    可以先不加拥挤度进行测试
+    '''
+    def fast_non_dominated_sort(self,population):
+        S = [[] for i in range(0, len(population))]
+        front = [[]]
+        n = [0 for i in range(0, len(population))]
+        rank = [0 for i in range(0, len(population))]
+        # 计算种群中每个个体的两个参数 n[p]和 S[p] ; 并将种群中参数n[p]=0的个体索引放入集合F1中
+        for p in range(0, len(population)):
+            S[p] = []
+            n[p] = 0
+            for q in range(0, len(population)):
+                # if p domains q:
+                if (population[p].length_ < population[q].length_ and population[p].raw_fitness_ < population[q].raw_fitness_) or (
+                        population[p].length_ <= population[q].length_ and population[p].raw_fitness_ < population[q].raw_fitness_) or (
+                        population[p].length_ < population[q].length_ and population[p].raw_fitness_ <= population[q].raw_fitness_):
+                    if q not in S[p]:
+                        S[p].append(q)
+                elif (population[q].length_ < population[p].length_ and population[q].raw_fitness_ < population[p].raw_fitness_) or (
+                        population[q].length_ <= population[p].length_ and population[q].raw_fitness_ < population[p].raw_fitness_) or (
+                        population[q].length_ < population[p].length_ and population[q].raw_fitness_ <= population[p].raw_fitness_):
+                    n[p] = n[p] + 1
+            if n[p] == 0:
+                rank[p] = 0
+                if p not in front[0]:
+                    front[0].append(p)
+        # 计算其他非帕累托前沿个体的等级并存入集合，并使用rank记录排名等级
+        i = 0
+        while (front[i] != []):
+            Q = []
+            # print(type(front[i]))
+            for p in iter(front[i]):
+                for q in iter(S[p]):
+                    n[q] = n[q] - 1
+                    if (n[q] == 0):
+                        rank[q] = i + 1
+                        if q not in Q:
+                            Q.append(q)
+            i = i + 1
+            front.append(Q)
+
+        del front[len(front) - 1]
+        # print(front)
+        return front
+
+    # Function to find index of list
+    def index_of(self,a, list):
+        for i in range(0, len(list)):
+            if list[i] == a:
+                return i
+        return -1
+    # Function to sort by values
+    def sort_by_values(self,list1, values):
+        sorted_list = []
+        while (len(sorted_list) != len(list1)):
+            if self.index_of(min(values), values) in list1:
+                sorted_list.append(self.index_of(min(values), values))
+            values[self.index_of(min(values), values)] = math.inf
+        return sorted_list
+    # Function to calculate crowding distance
+    def select_by_crowding_distance(self,population,front,reminder):
+        cur_population = copy.deepcopy([population[i] for i in front])
+        cur_population.sort(key=lambda x: x.raw_fitness_)
+        sorted1 = copy.deepcopy(cur_population)
+        cur_population.sort(key=lambda x: x.length_)
+        sorted2 = cur_population
+        distance = [0 for i in range(0, len(front))]
+        distance[0] = 4444444444444444
+        distance[len(front) - 1] = 4444444444444444
+        fitness_ = [sorted1[i].raw_fitness_ for i in range(len(cur_population))]
+        length_ =  [sorted2[i].length_ for i in range(len(cur_population))]
+        maxFit,minFit,maxLen,minLen = max(fitness_),min(fitness_),max(length_),min(length_)
+        #第k个个体的距离就是front[k]的距离----dis[k]==front[k]
+        for k in range(1, len(front) - 1):
+            distance[k] = distance[k] + (fitness_[k + 1] - fitness_[k - 1]) / (
+                        maxFit - minFit+0.01)
+        for k in range(1, len(front) - 1):
+            distance[k] = distance[k] + (length_[k + 1] - length_[k - 1]) / (
+                        maxLen - minLen+0.01)
+        index_ = sorted(range(len(distance)),key=lambda k:distance[k])
+        index_.reverse()
+        reminderPop = [cur_population[i] for i in index_][:reminder]
+        return reminderPop
+
     def _fit(self, X, y,qualified_list,sample_weight=None):
         """Fit the Genetic Program according to X, y.
 
@@ -704,7 +803,7 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
         if self.verbose:
             # Print header fields
             self._verbose_reporter()
-
+        #编写代码：1.父子代合并   2.非域排序   3.拥挤度排序
         best_program = None
         best_program_fitness_ = None
         for gen in range(prior_generations, self.generations):
@@ -735,11 +834,48 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             # Reduce, maintaining order across different n_jobs
             population = list(itertools.chain.from_iterable(population))
-            if top1Flag:
-                population.append(best_program_fitness_)
-                population.append(best_program)
+            #父子代合并
+            if parents is not None:
+                population.extend(parents)
+            #多目标优化中保存了父代和子代，所以不需要单独向种群中添加父代最优个体了
+            # if top1Flag:
+            #     population.append(best_program_fitness_)
+            #     population.append(best_program)
+            #快速非支配排序+多余front[k]的拥挤度排序--->筛选出新父代
+            temp_index = self.fast_non_dominated_sort(population)
+            '''
+            for subPop in temp_index:
+                prin = [population[i].raw_fitness_ for i in subPop]
+                print(prin)
+                prin = [population[i].length_ for i in subPop]
+                print(prin)            
+            '''
+
+            temp_popSize = 0
+            population_index = []
+            reminder_subPopulation = []
+            for subPop in temp_index:
+                pre_temp_popSize = temp_popSize
+                temp_popSize += len(subPop)
+                if temp_popSize >self.population_size:
+                    reminder = self.population_size-pre_temp_popSize
+                    # print("temp_popSize: ",temp_popSize,"reminder: ",reminder)
+                    reminder_subPopulation.extend(self.select_by_crowding_distance(population,subPop,reminder))
+                    # print("reminder_subPopulation: ",reminder_subPopulation)
+                    break
+                else:
+                    population_index.extend(subPop)
+            # print("len(population_index):",len(population_index),"population_index: ",population_index)
+            # population_index = sum(temp_index , [])[:self.population_size]
+            population = [population[i] for i in population_index]
+            if reminder_subPopulation !=[]:
+                population.extend(reminder_subPopulation)
+            # print("实际种群数量=", len(population))
+            if gen % 100 ==0:
+                print("实际种群数量=", len(population),population[0],population[200],population[400],population[-1])
             fitness = [program.raw_fitness_ for program in population]
             length = [program.length_ for program in population]
+            # print(fitness,length,sep="\n")
 
             parsimony_coefficient = None
             if self.parsimony_coefficient == 'auto':
@@ -769,10 +905,10 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
 
             # Record run details
             if self._metric.greater_is_better:
-                best_program = population[np.argmax(fitness_)]#按惩罚项的fitness排序
+                best_program = population[np.argmax(fitness)]#按惩罚项的fitness排序
                 best_program_fitness_ = population[np.argmax(fitness_)]
             else:
-                best_program = population[np.argmin(fitness_)]
+                best_program = population[np.argmin(fitness)]
                 best_program_fitness_ = population[np.argmin(fitness_)]
 
             self.run_details_['generation'].append(gen)
