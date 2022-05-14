@@ -871,8 +871,8 @@ class BaseSymbolic(BaseEstimator, metaclass=ABCMeta):
             if reminder_subPopulation !=[]:
                 population.extend(reminder_subPopulation)
             # print("实际种群数量=", len(population))
-            if gen % 100 ==0:
-                print("实际种群数量=", len(population),population[0],population[200],population[400],population[-1])
+            #if gen % 100 ==0:
+            #    print("实际种群数量=", len(population),population[0],population[200],population[400],population[-1])
             fitness = [program.raw_fitness_ for program in population]
             length = [program.length_ for program in population]
             # print(fitness,length,sep="\n")
