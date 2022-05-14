@@ -45,7 +45,8 @@ def exp(bound1, bound2):
 
 def sqrt(bound1, bound2):
     down = max(1e-10, bound1[0])
-    return [math.sqrt(down), math.sqrt(bound1[1])]
+    up = max(1e-10, bound2[0])
+    return [math.sqrt(down), math.sqrt(up)]
 
 
 def cal_spacebound(function_set=['add', 'sub', 'mul', 'div', 'sin', 'cos', 'log', 'exp', 'sqrt'], n_features_=1,
